@@ -8,26 +8,29 @@ from transcriber import transcribe_audio
 
 st.set_page_config(page_title="Instagram Reel Transcriber", layout="wide")
 
-async def process_video(temp_video_path, temp_audio_path, temp_dir):
-    # Extract audio
+async def process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar):
     try:
+        # Extract audio
+        progress_bar.progress(0.1)
         with st.spinner("Extracting audio..."):
             await asyncio.to_thread(extract_audio, temp_video_path, temp_audio_path)
+        progress_bar.progress(0.3)
         st.success("Audio extraction complete!")
-    except Exception as e:
-        st.error(f"Error during audio extraction: {str(e)}")
-        return None
 
-    # Transcribe audio
-    try:
+        # Transcribe audio
+        progress_bar.progress(0.4)
         with st.spinner("Transcribing audio..."):
-            transcription = await transcribe_audio(temp_audio_path)
+            transcription = await asyncio.wait_for(transcribe_audio(temp_audio_path), timeout=300)  # 5-minute timeout
+        progress_bar.progress(0.7)
         st.success("Transcription complete!")
-    except Exception as e:
-        st.error(f"Error during transcription: {str(e)}")
-        return None
 
-    return transcription
+        return transcription
+    except asyncio.TimeoutError:
+        st.error("Transcription timed out. Please try again with a shorter video.")
+        return None
+    except Exception as e:
+        st.error(f"Error during video processing: {str(e)}")
+        return None
 
 async def main():
     st.title("Instagram Reel Transcriber and Subtitle Generator")
@@ -46,7 +49,8 @@ async def main():
         temp_audio_path = os.path.join(temp_dir, "audio.wav")
 
         # Process video
-        transcription = await process_video(temp_video_path, temp_audio_path, temp_dir)
+        progress_bar = st.progress(0)
+        transcription = await process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar)
 
         if transcription is not None:
             # Subtitle customization
@@ -56,14 +60,17 @@ async def main():
             font_size = st.slider("Font Size", 5, 50, 24)
 
             # Generate subtitles
+            progress_bar.progress(0.8)
             with st.spinner("Generating subtitles..."):
                 subtitle_file = await asyncio.to_thread(generate_subtitles, transcription, temp_dir)
             st.success("Subtitles generated!")
 
             # Add subtitles to video
+            progress_bar.progress(0.9)
             with st.spinner("Adding subtitles to video..."):
                 output_video_path = os.path.join(temp_dir, "output_video.mp4")
                 await asyncio.to_thread(add_subtitles_to_video, temp_video_path, subtitle_file, output_video_path, font_color, bg_color, font_size)
+            progress_bar.progress(1.0)
             st.success("Video processing complete!")
 
             # Display video preview

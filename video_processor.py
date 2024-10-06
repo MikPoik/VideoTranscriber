@@ -12,12 +12,12 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
     print(f"Original video resolution: {video.w}x{video.h}")
     
     def create_subtitle_clip(txt, start, end):
-        base_fontsize = 24  # Set a base font size
+        base_fontsize = 12  # Set a smaller base font size
         video_height = video.h  # Get the video height
-        scale_factor = video_height / 1080  # Calculate scale factor based on 1080p reference
+        scale_factor = min(video_height / 1080, 1.0)  # Limit the scale factor to a maximum of 1.0
         adjusted_fontsize = int(base_fontsize * scale_factor)  # Adjust base font size
         user_scale_factor = font_size / 24  # Calculate user scale factor (24 is the default in the UI)
-        final_fontsize = max(int(adjusted_fontsize * user_scale_factor), 5)  # Apply user scale and ensure minimum size
+        final_fontsize = min(max(int(adjusted_fontsize * user_scale_factor), 5), 36)  # Apply user scale, ensure minimum size of 5 and maximum size of 36
         
         print(f"Video resolution: {video.w}x{video.h}")
         print(f"Scale factor: {scale_factor}")
@@ -26,7 +26,7 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
         print(f"User scale factor: {user_scale_factor}")
         print(f"Final font size: {final_fontsize}")
         
-        return (TextClip(txt, fontsize=final_fontsize, font='Arial', color=font_color, bg_color=bg_color, size=(video.w * 0.9, None))
+        return (TextClip(txt, fontsize=final_fontsize, font='Arial', color=font_color, bg_color=bg_color, size=(video.w * 0.8, None))
                 .set_position(('center', 'bottom'))
                 .set_start(start)
                 .set_end(end))
