@@ -24,7 +24,7 @@ async def process_video(temp_video_path, temp_audio_path, temp_dir):
 
     return transcription
 
-def main():
+async def main():
     st.title("Instagram Reel Transcriber and Subtitle Generator")
 
     # File uploader
@@ -41,10 +41,7 @@ def main():
         temp_audio_path = os.path.join(temp_dir, "audio.wav")
 
         # Process video asynchronously
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        transcription = loop.run_until_complete(process_video(temp_video_path, temp_audio_path, temp_dir))
-        loop.close()
+        transcription = await process_video(temp_video_path, temp_audio_path, temp_dir)
 
         if transcription is not None:
             # Subtitle customization
@@ -81,4 +78,4 @@ def main():
             os.rmdir(temp_dir)
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
