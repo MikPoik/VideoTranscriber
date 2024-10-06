@@ -26,7 +26,8 @@ async def transcribe_audio(audio_file, language="fi"):
                 source,
                 options
             )
-            return response.results
+            # Use .get() method to retrieve the results
+            return response.get()
 
     except Exception as e:
         raise Exception(f"Error transcribing audio with Deepgram: {str(e)}")
