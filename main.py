@@ -8,7 +8,7 @@ from transcriber import transcribe_audio, get_deepgram_api_key
 
 st.set_page_config(page_title="Instagram Reel Transcriber", layout="wide")
 
-async def process_video(temp_video_path, temp_audio_path, temp_dir):
+def process_video(temp_video_path, temp_audio_path, temp_dir):
     # Extract audio
     extract_audio(temp_video_path, temp_audio_path)
 
@@ -16,7 +16,7 @@ async def process_video(temp_video_path, temp_audio_path, temp_dir):
     try:
         get_deepgram_api_key()  # Check if API key is set
         with st.spinner("Transcribing audio..."):
-            transcription = await transcribe_audio(temp_audio_path)
+            transcription = asyncio.run(transcribe_audio(temp_audio_path))
         st.success("Transcription complete!")
     except Exception as e:
         st.error(f"Error during transcription: {str(e)}")
@@ -24,7 +24,7 @@ async def process_video(temp_video_path, temp_audio_path, temp_dir):
 
     return transcription
 
-async def main():
+def main():
     st.title("Instagram Reel Transcriber and Subtitle Generator")
 
     # File uploader
@@ -40,8 +40,8 @@ async def main():
         # Extract audio
         temp_audio_path = os.path.join(temp_dir, "audio.wav")
 
-        # Process video asynchronously
-        transcription = await process_video(temp_video_path, temp_audio_path, temp_dir)
+        # Process video
+        transcription = process_video(temp_video_path, temp_audio_path, temp_dir)
 
         if transcription is not None:
             # Subtitle customization
@@ -78,4 +78,4 @@ async def main():
             os.rmdir(temp_dir)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
