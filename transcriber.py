@@ -1,6 +1,9 @@
 import os
-from deepgram import Deepgram
-from deepgram.clients.prerecorded import PrerecordedOptions
+from deepgram import (
+    DeepgramClient,
+    PrerecordedOptions,
+    FileSource,
+)
 
 DEEPGRAM_API_KEY = os.environ.get("DG_API_KEY")
 
@@ -9,7 +12,7 @@ async def transcribe_audio(audio_file, language="fi"):
         if not DEEPGRAM_API_KEY:
             raise ValueError("Deepgram API key is not set. Please set the DG_API_KEY environment variable.")
 
-        deepgram = Deepgram(DEEPGRAM_API_KEY)
+        deepgram = DeepgramClient(DEEPGRAM_API_KEY)
         options = PrerecordedOptions(
             model="nova-2",
             smart_format=True,
@@ -19,7 +22,10 @@ async def transcribe_audio(audio_file, language="fi"):
 
         with open(audio_file, "rb") as audio:
             source = {"buffer": audio, "mimetype": "audio/wav"}
-            response = await deepgram.transcription.prerecorded(source, options)
+            response = await deepgram.listen.prerecorded.v("1").transcribe_file(
+                source,
+                options
+            )
             return response
 
     except Exception as e:
