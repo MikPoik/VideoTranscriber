@@ -9,10 +9,16 @@ def extract_audio(video_path, audio_path):
 
 def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, bg_color, font_size):
     video = VideoFileClip(video_path)
+    print(f"Original video resolution: {video.w}x{video.h}")
     
     def create_subtitle_clip(txt, start, end):
-        fontsize = max(int(font_size), 5)  # Ensure minimum font size of 5 and convert to integer
-        print(f"Creating subtitle clip with font size: {fontsize}")
+        base_fontsize = 24  # Set a base font size
+        video_height = video.h  # Get the video height
+        adjusted_fontsize = int(base_fontsize * (video_height / 1080))  # Adjust font size based on video resolution
+        fontsize = max(int(font_size * (adjusted_fontsize / base_fontsize)), 5)  # Scale user-selected font size
+        print(f"Video resolution: {video.w}x{video.h}")
+        print(f"Adjusted base font size: {adjusted_fontsize}")
+        print(f"Final font size: {fontsize}")
         return (TextClip(txt, fontsize=fontsize, font='Arial', color=font_color, bg_color=bg_color, size=(video.w, None))
                 .set_position(('center', 'bottom'))
                 .set_start(start)
@@ -32,6 +38,7 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
             subtitle_clips.append(create_subtitle_clip(text, start, end))
 
     final_video = CompositeVideoClip([video] + subtitle_clips)
+    print(f"Output video resolution: {final_video.w}x{final_video.h}")
     final_video.write_videofile(output_path, codec='libx264', audio_codec='aac')
     video.close()
     final_video.close()
