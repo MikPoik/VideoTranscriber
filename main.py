@@ -4,7 +4,7 @@ import tempfile
 import asyncio
 from video_processor import extract_audio, add_subtitles_to_video
 from subtitle_generator import generate_subtitles
-from transcriber import transcribe_audio, get_deepgram_api_key
+from transcriber import transcribe_audio
 
 st.set_page_config(page_title="Instagram Reel Transcriber", layout="wide")
 
@@ -14,7 +14,6 @@ async def process_video(temp_video_path, temp_audio_path, temp_dir):
 
     # Transcribe audio
     try:
-        get_deepgram_api_key()  # Check if API key is set
         with st.spinner("Transcribing audio..."):
             transcription = await transcribe_audio(temp_audio_path)
         st.success("Transcription complete!")
