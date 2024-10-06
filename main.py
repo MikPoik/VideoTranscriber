@@ -2,9 +2,14 @@ import streamlit as st
 import os
 import tempfile
 import asyncio
+import logging
 from video_processor import extract_audio, add_subtitles_to_video
 from subtitle_generator import generate_subtitles
 from transcriber import transcribe_audio
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 st.set_page_config(page_title="Instagram Reel Transcriber", layout="wide")
 
@@ -16,6 +21,7 @@ async def process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar
             await asyncio.to_thread(extract_audio, temp_video_path, temp_audio_path)
         progress_bar.progress(0.3)
         st.success("Audio extraction complete!")
+        logger.info("Audio extraction completed successfully")
 
         # Transcribe audio
         progress_bar.progress(0.4)
@@ -23,11 +29,14 @@ async def process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar
             transcription_task = asyncio.create_task(transcribe_audio(temp_audio_path))
             try:
                 transcription = await asyncio.wait_for(transcription_task, timeout=300)  # 5-minute timeout
+                logger.info("Transcription completed successfully")
             except asyncio.TimeoutError:
+                logger.warning("Transcription timed out after 300 seconds")
                 transcription_task.cancel()
                 try:
                     await transcription_task
                 except asyncio.CancelledError:
+                    logger.error("Transcription task cancelled due to timeout")
                     st.error("Transcription timed out. Please try again with a shorter video.")
                     return None
         progress_bar.progress(0.7)
@@ -35,6 +44,7 @@ async def process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar
 
         return transcription
     except Exception as e:
+        logger.error(f"Error during video processing: {str(e)}", exc_info=True)
         st.error(f"Error during video processing: {str(e)}")
         return None
 
@@ -70,6 +80,7 @@ async def main():
             with st.spinner("Generating subtitles..."):
                 subtitle_file = await asyncio.to_thread(generate_subtitles, transcription, temp_dir)
             st.success("Subtitles generated!")
+            logger.info("Subtitles generated successfully")
 
             # Add subtitles to video
             progress_bar.progress(0.9)
@@ -78,6 +89,7 @@ async def main():
                 await asyncio.to_thread(add_subtitles_to_video, temp_video_path, subtitle_file, output_video_path, font_color, bg_color, font_size)
             progress_bar.progress(1.0)
             st.success("Video processing complete!")
+            logger.info("Video processing completed successfully")
 
             # Display video preview
             st.subheader("Video Preview")
@@ -98,6 +110,7 @@ async def main():
             await asyncio.to_thread(os.remove, subtitle_file)
             await asyncio.to_thread(os.remove, output_video_path)
             await asyncio.to_thread(os.rmdir, temp_dir)
+            logger.info("Temporary files cleaned up")
 
 if __name__ == "__main__":
     asyncio.run(main())
