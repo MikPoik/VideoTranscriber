@@ -20,14 +20,20 @@ async def process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar
         # Transcribe audio
         progress_bar.progress(0.4)
         with st.spinner("Transcribing audio..."):
-            transcription = await asyncio.wait_for(transcribe_audio(temp_audio_path), timeout=300)  # 5-minute timeout
+            transcription_task = asyncio.create_task(transcribe_audio(temp_audio_path))
+            try:
+                transcription = await asyncio.wait_for(transcription_task, timeout=300)  # 5-minute timeout
+            except asyncio.TimeoutError:
+                transcription_task.cancel()
+                try:
+                    await transcription_task
+                except asyncio.CancelledError:
+                    st.error("Transcription timed out. Please try again with a shorter video.")
+                    return None
         progress_bar.progress(0.7)
         st.success("Transcription complete!")
 
         return transcription
-    except asyncio.TimeoutError:
-        st.error("Transcription timed out. Please try again with a shorter video.")
-        return None
     except Exception as e:
         st.error(f"Error during video processing: {str(e)}")
         return None

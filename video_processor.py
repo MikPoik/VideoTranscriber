@@ -12,21 +12,21 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
     print(f"Original video resolution: {video.w}x{video.h}")
     
     def create_subtitle_clip(txt, start, end):
-        base_fontsize = 12  # Set a smaller base font size
-        video_height = video.h  # Get the video height
-        scale_factor = min(video_height / 1080, 1.0)  # Limit the scale factor to a maximum of 1.0
-        adjusted_fontsize = int(base_fontsize * scale_factor)  # Adjust base font size
-        user_scale_factor = font_size / 24  # Calculate user scale factor (24 is the default in the UI)
-        final_fontsize = min(max(int(adjusted_fontsize * user_scale_factor), 5), 36)  # Apply user scale, ensure minimum size of 5 and maximum size of 36
-        
-        print(f"Video resolution: {video.w}x{video.h}")
-        print(f"Scale factor: {scale_factor}")
-        print(f"Adjusted base font size: {adjusted_fontsize}")
-        print(f"User-selected font size: {font_size}")
-        print(f"User scale factor: {user_scale_factor}")
-        print(f"Final font size: {final_fontsize}")
-        
-        return (TextClip(txt, fontsize=final_fontsize, font='Arial', color=font_color, bg_color=bg_color, size=(video.w * 0.8, None))
+        # Base font size
+        base_fontsize = 12
+        video_height = video.h
+        # Scale factor to maintain text proportion
+        scale_factor = min(video_height / 1080, 0.5)  # now the max scale is 50%
+        adjusted_fontsize = int(base_fontsize * scale_factor)
+        user_scale_factor = font_size / 24
+        # Final computed font size should respect min and max constraints
+        final_fontsize = min(max(int(adjusted_fontsize * user_scale_factor), 5), 24)
+
+        # Adjust the size to fit better
+        subtitle_width_factor = 0.6  # reduce width factor
+        subtitle_size = (video.w * subtitle_width_factor, None)
+
+        return (TextClip(txt, fontsize=final_fontsize, font='Arial', color=font_color, bg_color=bg_color, size=subtitle_size)
                 .set_position(('center', 'bottom'))
                 .set_start(start)
                 .set_end(end))
