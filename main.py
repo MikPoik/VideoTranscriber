@@ -10,7 +10,13 @@ st.set_page_config(page_title="Instagram Reel Transcriber", layout="wide")
 
 async def process_video(temp_video_path, temp_audio_path, temp_dir):
     # Extract audio
-    await asyncio.to_thread(extract_audio, temp_video_path, temp_audio_path)
+    try:
+        with st.spinner("Extracting audio..."):
+            await asyncio.to_thread(extract_audio, temp_video_path, temp_audio_path)
+        st.success("Audio extraction complete!")
+    except Exception as e:
+        st.error(f"Error during audio extraction: {str(e)}")
+        return None
 
     # Transcribe audio
     try:
@@ -50,11 +56,15 @@ async def main():
             font_size = st.slider("Font Size", 5, 50, 24)
 
             # Generate subtitles
-            subtitle_file = await asyncio.to_thread(generate_subtitles, transcription, temp_dir)
+            with st.spinner("Generating subtitles..."):
+                subtitle_file = await asyncio.to_thread(generate_subtitles, transcription, temp_dir)
+            st.success("Subtitles generated!")
 
             # Add subtitles to video
-            output_video_path = os.path.join(temp_dir, "output_video.mp4")
-            await asyncio.to_thread(add_subtitles_to_video, temp_video_path, subtitle_file, output_video_path, font_color, bg_color, font_size)
+            with st.spinner("Adding subtitles to video..."):
+                output_video_path = os.path.join(temp_dir, "output_video.mp4")
+                await asyncio.to_thread(add_subtitles_to_video, temp_video_path, subtitle_file, output_video_path, font_color, bg_color, font_size)
+            st.success("Video processing complete!")
 
             # Display video preview
             st.subheader("Video Preview")
