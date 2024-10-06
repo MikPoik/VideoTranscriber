@@ -10,7 +10,7 @@ st.set_page_config(page_title="Instagram Reel Transcriber", layout="wide")
 
 async def process_video(temp_video_path, temp_audio_path, temp_dir):
     # Extract audio
-    extract_audio(temp_video_path, temp_audio_path)
+    await asyncio.to_thread(extract_audio, temp_video_path, temp_audio_path)
 
     # Transcribe audio
     try:
@@ -47,14 +47,14 @@ async def main():
             st.subheader("Customize Subtitles")
             font_color = st.color_picker("Font Color", "#FFFFFF")
             bg_color = st.color_picker("Background Color", "#000000")
-            font_size = st.slider("Font Size", 10, 50, 24)
+            font_size = st.slider("Font Size", 5, 50, 24)
 
             # Generate subtitles
-            subtitle_file = generate_subtitles(transcription, temp_dir)
+            subtitle_file = await asyncio.to_thread(generate_subtitles, transcription, temp_dir)
 
             # Add subtitles to video
             output_video_path = os.path.join(temp_dir, "output_video.mp4")
-            add_subtitles_to_video(temp_video_path, subtitle_file, output_video_path, font_color, bg_color, font_size)
+            await asyncio.to_thread(add_subtitles_to_video, temp_video_path, subtitle_file, output_video_path, font_color, bg_color, font_size)
 
             # Display video preview
             st.subheader("Video Preview")
@@ -70,11 +70,11 @@ async def main():
                 )
 
             # Clean up temporary files
-            os.remove(temp_video_path)
-            os.remove(temp_audio_path)
-            os.remove(subtitle_file)
-            os.remove(output_video_path)
-            os.rmdir(temp_dir)
+            await asyncio.to_thread(os.remove, temp_video_path)
+            await asyncio.to_thread(os.remove, temp_audio_path)
+            await asyncio.to_thread(os.remove, subtitle_file)
+            await asyncio.to_thread(os.remove, output_video_path)
+            await asyncio.to_thread(os.rmdir, temp_dir)
 
 if __name__ == "__main__":
     asyncio.run(main())

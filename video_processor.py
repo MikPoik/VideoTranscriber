@@ -11,7 +11,8 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
     video = VideoFileClip(video_path)
     
     def create_subtitle_clip(txt, start, end):
-        return (TextClip(txt, fontsize=font_size, font='Arial', color=font_color, bg_color=bg_color, size=(video.w, None))
+        fontsize = max(font_size, 5)  # Ensure minimum font size of 5
+        return (TextClip(txt, fontsize=fontsize, font='Arial', color=font_color, bg_color=bg_color, size=(video.w, None))
                 .set_position(('center', 'bottom'))
                 .set_start(start)
                 .set_end(end))
