@@ -22,12 +22,13 @@ async def transcribe_audio(audio_file, language="fi"):
 
         with open(audio_file, "rb") as audio:
             source = {"buffer": audio, "mimetype": "audio/wav"}
-            response = await deepgram.listen.prerecorded.v("1").transcribe_file(
+            response = deepgram.listen.prerecorded.v("1").transcribe_file(
                 source,
                 options
             )
-            # Use .get() method to retrieve the results
-            return response.get()
+            # Use .wait() method to properly await the response
+            result = await response.wait()
+            return result
 
     except Exception as e:
         raise Exception(f"Error transcribing audio with Deepgram: {str(e)}")
