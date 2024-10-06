@@ -41,7 +41,10 @@ def main():
         temp_audio_path = os.path.join(temp_dir, "audio.wav")
 
         # Process video asynchronously
-        transcription = asyncio.run(process_video(temp_video_path, temp_audio_path, temp_dir))
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        transcription = loop.run_until_complete(process_video(temp_video_path, temp_audio_path, temp_dir))
+        loop.close()
 
         if transcription is not None:
             # Subtitle customization
