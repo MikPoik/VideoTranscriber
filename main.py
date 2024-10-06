@@ -1,11 +1,28 @@
 import streamlit as st
 import os
 import tempfile
+import asyncio
 from video_processor import extract_audio, add_subtitles_to_video
 from subtitle_generator import generate_subtitles
 from transcriber import transcribe_audio, get_deepgram_api_key
 
 st.set_page_config(page_title="Instagram Reel Transcriber", layout="wide")
+
+async def process_video(temp_video_path, temp_audio_path, temp_dir):
+    # Extract audio
+    extract_audio(temp_video_path, temp_audio_path)
+
+    # Transcribe audio
+    try:
+        get_deepgram_api_key()  # Check if API key is set
+        with st.spinner("Transcribing audio..."):
+            transcription = await transcribe_audio(temp_audio_path)
+        st.success("Transcription complete!")
+    except Exception as e:
+        st.error(f"Error during transcription: {str(e)}")
+        return None
+
+    return transcription
 
 def main():
     st.title("Instagram Reel Transcriber and Subtitle Generator")
@@ -22,50 +39,43 @@ def main():
 
         # Extract audio
         temp_audio_path = os.path.join(temp_dir, "audio.wav")
-        extract_audio(temp_video_path, temp_audio_path)
 
-        # Transcribe audio
-        try:
-            get_deepgram_api_key()  # Check if API key is set
-            with st.spinner("Transcribing audio..."):
-                transcription = transcribe_audio(temp_audio_path)
-            st.success("Transcription complete!")
-        except Exception as e:
-            st.error(f"Error during transcription: {str(e)}")
-            return
+        # Process video asynchronously
+        transcription = asyncio.run(process_video(temp_video_path, temp_audio_path, temp_dir))
 
-        # Subtitle customization
-        st.subheader("Customize Subtitles")
-        font_color = st.color_picker("Font Color", "#FFFFFF")
-        bg_color = st.color_picker("Background Color", "#000000")
-        font_size = st.slider("Font Size", 10, 50, 24)
+        if transcription is not None:
+            # Subtitle customization
+            st.subheader("Customize Subtitles")
+            font_color = st.color_picker("Font Color", "#FFFFFF")
+            bg_color = st.color_picker("Background Color", "#000000")
+            font_size = st.slider("Font Size", 10, 50, 24)
 
-        # Generate subtitles
-        subtitle_file = generate_subtitles(transcription, temp_dir)
+            # Generate subtitles
+            subtitle_file = generate_subtitles(transcription, temp_dir)
 
-        # Add subtitles to video
-        output_video_path = os.path.join(temp_dir, "output_video.mp4")
-        add_subtitles_to_video(temp_video_path, subtitle_file, output_video_path, font_color, bg_color, font_size)
+            # Add subtitles to video
+            output_video_path = os.path.join(temp_dir, "output_video.mp4")
+            add_subtitles_to_video(temp_video_path, subtitle_file, output_video_path, font_color, bg_color, font_size)
 
-        # Display video preview
-        st.subheader("Video Preview")
-        st.video(output_video_path)
+            # Display video preview
+            st.subheader("Video Preview")
+            st.video(output_video_path)
 
-        # Download button
-        with open(output_video_path, "rb") as file:
-            st.download_button(
-                label="Download Video with Subtitles",
-                data=file,
-                file_name="subtitled_video.mp4",
-                mime="video/mp4"
-            )
+            # Download button
+            with open(output_video_path, "rb") as file:
+                st.download_button(
+                    label="Download Video with Subtitles",
+                    data=file,
+                    file_name="subtitled_video.mp4",
+                    mime="video/mp4"
+                )
 
-        # Clean up temporary files
-        os.remove(temp_video_path)
-        os.remove(temp_audio_path)
-        os.remove(subtitle_file)
-        os.remove(output_video_path)
-        os.rmdir(temp_dir)
+            # Clean up temporary files
+            os.remove(temp_video_path)
+            os.remove(temp_audio_path)
+            os.remove(subtitle_file)
+            os.remove(output_video_path)
+            os.rmdir(temp_dir)
 
 if __name__ == "__main__":
     main()
