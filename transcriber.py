@@ -25,7 +25,7 @@ async def transcribe_audio(audio_file, language="fi"):
         }
 
         options = PrerecordedOptions(
-            model="whisper-large",
+            model="nova-2",
             smart_format=True,
             language=language,
             punctuate=True,
