@@ -5,6 +5,8 @@ description = "Add your description here"
 requires-python = ">=3.11"
 dependencies = [
     "deepgram-sdk==3.7.3",
+    "flask>=3.0.3",
     "moviepy==2.0.0.dev2",
+    "numpy>=2.1.2",
     "streamlit>=1.39.0",
 ]
