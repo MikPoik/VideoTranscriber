@@ -1,6 +1,9 @@
+import os
 from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip, ColorClip
 from moviepy.video.tools.subtitles import SubtitlesClip
 from textwrap import wrap
+
+# Remove the change_settings import and usage
 
 def extract_audio(video_path, audio_path):
     video = VideoFileClip(video_path)
@@ -19,7 +22,7 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
     max_chars_per_line = int(video_width / (fontsize * 0.6))
     wrapped_text = '\n'.join(wrap(txt, max_chars_per_line))
 
-    txt_clip = TextClip(wrapped_text, fontsize=fontsize, font='Arial', color=font_color.lstrip('#'), 
+    txt_clip = TextClip(wrapped_text, fontsize=fontsize, font='DejaVu-Sans', color=font_color.lstrip('#'), 
                         stroke_color='black', stroke_width=2, method='caption', size=(video_width * 0.9, None))
 
     bg_clip = ColorClip(size=(txt_clip.w, txt_clip.h), color=bg_color.lstrip('#'))
