@@ -101,13 +101,22 @@ async def main():
             st.subheader("Video Preview")
             st.video(output_video_path)
 
-            # Download button
+            # Download button for video
             with open(output_video_path, "rb") as file:
                 st.download_button(
                     label="Download Video with Subtitles",
                     data=file,
                     file_name="subtitled_video.mp4",
                     mime="video/mp4"
+                )
+
+            # Download button for subtitles
+            with open(subtitle_file, "rb") as file:
+                st.download_button(
+                    label="Download Subtitles (.srt)",
+                    data=file,
+                    file_name="subtitles.srt",
+                    mime="text/plain"
                 )
 
             # Clean up temporary files
