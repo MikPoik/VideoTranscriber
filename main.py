@@ -91,6 +91,9 @@ async def main():
         output_video_path = None  # Initialize output_video_path
 
         if transcription is not None:
+            # Store transcription in session state
+            st.session_state.transcription = transcription
+
             # Subtitle customization
             st.subheader("Customize Subtitles")
             font_color = st.color_picker("Font Color", "#FFFFFF")
@@ -116,26 +119,29 @@ async def main():
 
             # Add button to regenerate video preview
             if st.button("Regenerate Video Preview"):
-                output_video_path = await regenerate_video_preview(
-                    st.session_state.temp_video_path,
-                    st.session_state.subtitle_file,
-                    font_color,
-                    bg_color,
-                    font_size
-                )
-                
-                # Display video preview
-                st.subheader("Video Preview")
-                st.video(output_video_path)
-
-                # Download button
-                with open(output_video_path, "rb") as file:
-                    st.download_button(
-                        label="Download Video with Subtitles",
-                        data=file,
-                        file_name="subtitled_video.mp4",
-                        mime="video/mp4"
+                if hasattr(st.session_state, 'transcription'):
+                    output_video_path = await regenerate_video_preview(
+                        st.session_state.temp_video_path,
+                        st.session_state.subtitle_file,
+                        font_color,
+                        bg_color,
+                        font_size
                     )
+                    
+                    # Display video preview
+                    st.subheader("Video Preview")
+                    st.video(output_video_path)
+
+                    # Download button
+                    with open(output_video_path, "rb") as file:
+                        st.download_button(
+                            label="Download Video with Subtitles",
+                            data=file,
+                            file_name="subtitled_video.mp4",
+                            mime="video/mp4"
+                        )
+                else:
+                    st.error("Transcription not found. Please upload the video again.")
 
         # Clean up temporary files
         await clean_up_files(temp_video_path, temp_audio_path, subtitle_file, output_video_path, temp_dir)
