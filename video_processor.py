@@ -46,9 +46,8 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
     # Position the subtitle at the bottom with some padding
     txt_clip = txt_clip.set_position(('center', video_height - txt_clip.h - 50))
     
-    # Add fade in and fade out effects
-    fade_duration = min(0.5, (end - start) / 4)  # Fade duration is 0.5s or 1/4 of subtitle duration, whichever is shorter
-    txt_clip = txt_clip.fade_in(fade_duration).fade_out(fade_duration)
+    # Set the duration of the subtitle clip
+    txt_clip = txt_clip.set_duration(end - start)
 
     return txt_clip.set_start(start).set_end(end)
 
