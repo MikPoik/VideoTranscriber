@@ -1,7 +1,8 @@
 import os
-from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip, ColorClip
+from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip, ImageClip
 from moviepy.video.tools.subtitles import SubtitlesClip
 from textwrap import wrap
+import numpy as np
 
 def extract_audio(video_path, audio_path):
     video = VideoFileClip(video_path)
@@ -19,8 +20,10 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
 
     txt_clip = TextClip(wrapped_text, fontsize=fontsize, font='Arial', color=font_color, method='label')
     
-    # Create a color clip for the background
-    color_clip = ColorClip(size=(txt_clip.w + 10, txt_clip.h + 10), color=bg_color)
+    # Create a solid color background
+    bg_color_rgb = tuple(int(bg_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
+    color_array = np.full((txt_clip.h + 10, txt_clip.w + 10, 3), bg_color_rgb, dtype=np.uint8)
+    color_clip = ImageClip(color_array)
     
     # Overlay the text clip on the color clip
     txt_clip = txt_clip.set_position((5, 5))
