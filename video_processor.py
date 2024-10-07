@@ -10,6 +10,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def extract_audio(video_path, audio_path):
+    print("Extracitng audio from video...")
     try:
         video = VideoFileClip(video_path)
         audio = video.audio

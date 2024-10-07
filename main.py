@@ -107,6 +107,9 @@ async def main():
             st.success("Subtitles generated!")
             logger.info("Subtitles generated successfully")
 
+            # Store subtitle file path in session state
+            st.session_state.subtitle_file = subtitle_file
+
             # Display subtitle content
             with open(subtitle_file, 'r') as f:
                 subtitle_content = f.read()
@@ -115,11 +118,10 @@ async def main():
 
             # Store paths in session state
             st.session_state.temp_video_path = temp_video_path
-            st.session_state.subtitle_file = subtitle_file
 
             # Add button to regenerate video preview
             if st.button("Regenerate Video Preview"):
-                if hasattr(st.session_state, 'transcription'):
+                if hasattr(st.session_state, 'transcription') and hasattr(st.session_state, 'subtitle_file'):
                     output_video_path = await regenerate_video_preview(
                         st.session_state.temp_video_path,
                         st.session_state.subtitle_file,
@@ -141,10 +143,10 @@ async def main():
                             mime="video/mp4"
                         )
                 else:
-                    st.error("Transcription not found. Please upload the video again.")
+                    st.error("Transcription or subtitle file not found. Please upload the video again.")
 
         # Clean up temporary files
-        await clean_up_files(temp_video_path, temp_audio_path, subtitle_file, output_video_path, temp_dir)
+        await clean_up_files(temp_video_path, temp_audio_path, st.session_state.get('subtitle_file'), output_video_path, temp_dir)
 
 if __name__ == "__main__":
     asyncio.run(main())

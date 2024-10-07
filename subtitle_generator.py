@@ -1,6 +1,7 @@
 import os
 
 def generate_subtitles(transcription, output_dir):
+    print("Generating subtitles...")
     subtitle_file = os.path.join(output_dir, "subtitles.srt")
     
     with open(subtitle_file, "w") as f:

@@ -30,7 +30,7 @@ async def transcribe_audio(audio_file, language="fi"):
             language=language,
             punctuate=True,
         )
-
+        print("Making request to Deepgram")
         response = await deepgram.listen.asyncrest.v("1").transcribe_file(
             payload, options, timeout=httpx.Timeout(300.0, connect=10.0)
         )
