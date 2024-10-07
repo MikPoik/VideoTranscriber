@@ -54,6 +54,20 @@ async def regenerate_video_preview(video_path, subtitle_file, font_color, bg_col
         await asyncio.to_thread(add_subtitles_to_video, video_path, subtitle_file, output_video_path, font_color, bg_color, font_size)
     return output_video_path
 
+async def clean_up_files(temp_video_path, temp_audio_path, subtitle_file, output_video_path, temp_dir):
+    files_to_remove = [temp_video_path, temp_audio_path, subtitle_file]
+    if output_video_path:
+        files_to_remove.append(output_video_path)
+    
+    for file_path in files_to_remove:
+        if file_path and os.path.exists(file_path):
+            await asyncio.to_thread(os.remove, file_path)
+    
+    if temp_dir and os.path.exists(temp_dir):
+        await asyncio.to_thread(os.rmdir, temp_dir)
+    
+    logger.info("Temporary files cleaned up")
+
 async def main():
     st.title("Instagram Reel Transcriber and Subtitle Generator")
 
@@ -73,6 +87,8 @@ async def main():
         # Process video
         progress_bar = st.progress(0)
         transcription = await process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar)
+
+        output_video_path = None  # Initialize output_video_path
 
         if transcription is not None:
             # Subtitle customization
@@ -121,13 +137,8 @@ async def main():
                         mime="video/mp4"
                     )
 
-            # Clean up temporary files
-            await asyncio.to_thread(os.remove, temp_video_path)
-            await asyncio.to_thread(os.remove, temp_audio_path)
-            await asyncio.to_thread(os.remove, subtitle_file)
-            await asyncio.to_thread(os.remove, output_video_path)
-            await asyncio.to_thread(os.rmdir, temp_dir)
-            logger.info("Temporary files cleaned up")
+        # Clean up temporary files
+        await clean_up_files(temp_video_path, temp_audio_path, subtitle_file, output_video_path, temp_dir)
 
 if __name__ == "__main__":
     asyncio.run(main())
