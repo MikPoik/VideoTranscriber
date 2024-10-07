@@ -1,4 +1,4 @@
-from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
+from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip, ColorClip
 from moviepy.video.tools.subtitles import SubtitlesClip
 from textwrap import wrap
 
@@ -9,47 +9,26 @@ def extract_audio(video_path, audio_path):
     video.close()
     audio.close()
 
-def calculate_font_size(text, base_size, max_size):
-    text_length = len(text)
-    if text_length <= 5:
-        return max_size
-    elif text_length <= 20:
-        return max(base_size, int(max_size * (1 - (text_length - 5) / 15)))
-    else:
-        return base_size
-
 def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font_size):
     video_width, video_height = video_size
 
-    # Base font size
-    base_fontsize = 12
-    # Scale factor to maintain text proportion
-    scale_factor = min(video_height / 1080, 0.5)  # max scale is 50%
-    adjusted_base_fontsize = int(base_fontsize * scale_factor)
-    max_fontsize = int(24 * scale_factor)
-    user_scale_factor = font_size / 24
-    
-    # Calculate font size based on text length
-    calculated_fontsize = calculate_font_size(txt, adjusted_base_fontsize, max_fontsize)
-    
-    # Apply user scale factor and ensure minimum size
-    final_fontsize = max(int(calculated_fontsize * user_scale_factor), 5)
+    base_fontsize = 24
+    scale_factor = min(video_height / 720, 1.0)
+    fontsize = int(base_fontsize * scale_factor * (font_size / 24))
 
-    # Improve text wrapping
-    max_chars_per_line = int(video_width / (final_fontsize * 0.6))  # Estimate chars that fit in video width
+    max_chars_per_line = int(video_width / (fontsize * 0.6))
     wrapped_text = '\n'.join(wrap(txt, max_chars_per_line))
 
-    # Create text clip with outline
-    txt_clip = TextClip(wrapped_text, fontsize=final_fontsize, font='Arial', color=font_color, bg_color=bg_color, 
+    txt_clip = TextClip(wrapped_text, fontsize=fontsize, font='Arial', color=font_color.lstrip('#'), 
                         stroke_color='black', stroke_width=2, method='caption', size=(video_width * 0.9, None))
-    
-    # Position the subtitle at the bottom with some padding
-    txt_clip = txt_clip.set_position(('center', video_height - txt_clip.h - 50))
-    
-    # Set the duration of the subtitle clip
-    txt_clip = txt_clip.set_duration(end - start)
 
-    return txt_clip.set_start(start).set_end(end)
+    bg_clip = ColorClip(size=(txt_clip.w, txt_clip.h), color=bg_color.lstrip('#'))
+    bg_clip = bg_clip.set_opacity(0.8)
+
+    subtitle_clip = CompositeVideoClip([bg_clip, txt_clip.set_position('center')])
+    subtitle_clip = subtitle_clip.set_position(('center', video_height - subtitle_clip.h - 50))
+
+    return subtitle_clip.set_start(start).set_end(end)
 
 def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, bg_color, font_size):
     video = VideoFileClip(video_path)
