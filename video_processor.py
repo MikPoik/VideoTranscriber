@@ -1,5 +1,5 @@
 import os
-from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip
+from moviepy.editor import VideoFileClip, TextClip, CompositeVideoClip, ColorClip
 from moviepy.video.tools.subtitles import SubtitlesClip
 from textwrap import wrap
 
@@ -18,8 +18,15 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
     wrapped_text = '\n'.join(wrap(txt, max_chars_per_line))
 
     txt_clip = TextClip(wrapped_text, fontsize=fontsize, font='Arial', color=font_color, method='label')
-    txt_clip = txt_clip.on_color(size=(txt_clip.w + 10, txt_clip.h + 10), color=bg_color, pos=(5, 5))
-    subtitle_clip = txt_clip.set_position(('center', video_height - txt_clip.h - 50))
+    
+    # Create a color clip for the background
+    color_clip = ColorClip(size=(txt_clip.w + 10, txt_clip.h + 10), color=bg_color)
+    
+    # Overlay the text clip on the color clip
+    txt_clip = txt_clip.set_position((5, 5))
+    subtitle_clip = CompositeVideoClip([color_clip, txt_clip])
+    
+    subtitle_clip = subtitle_clip.set_position(('center', video_height - subtitle_clip.h - 50))
 
     return subtitle_clip.set_start(start).set_end(end)
 
