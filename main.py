@@ -82,6 +82,12 @@ async def main():
             st.success("Subtitles generated!")
             logger.info("Subtitles generated successfully")
 
+            # Display subtitle content
+            with open(subtitle_file, 'r') as f:
+                subtitle_content = f.read()
+            st.subheader('Generated Subtitles')
+            st.text_area('Subtitle Content (.srt)', subtitle_content, height=300)
+
             # Add subtitles to video
             progress_bar.progress(0.9)
             with st.spinner("Adding subtitles to video..."):
