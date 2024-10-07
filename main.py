@@ -48,6 +48,12 @@ async def process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar
         st.error(f"Error during video processing: {str(e)}")
         return None
 
+async def regenerate_video_preview(video_path, subtitle_file, font_color, bg_color, font_size):
+    with st.spinner("Regenerating video preview..."):
+        output_video_path = os.path.join(os.path.dirname(video_path), "output_video.mp4")
+        await asyncio.to_thread(add_subtitles_to_video, video_path, subtitle_file, output_video_path, font_color, bg_color, font_size)
+    return output_video_path
+
 async def main():
     st.title("Instagram Reel Transcriber and Subtitle Generator")
 
@@ -88,27 +94,32 @@ async def main():
             st.subheader('Generated Subtitles')
             st.text_area('Subtitle Content (.srt)', subtitle_content, height=300)
 
-            # Add subtitles to video
-            progress_bar.progress(0.9)
-            with st.spinner("Adding subtitles to video..."):
-                output_video_path = os.path.join(temp_dir, "output_video.mp4")
-                await asyncio.to_thread(add_subtitles_to_video, temp_video_path, subtitle_file, output_video_path, font_color, bg_color, font_size)
-            progress_bar.progress(1.0)
-            st.success("Video processing complete!")
-            logger.info("Video processing completed successfully")
+            # Store paths in session state
+            st.session_state.temp_video_path = temp_video_path
+            st.session_state.subtitle_file = subtitle_file
 
-            # Display video preview
-            st.subheader("Video Preview")
-            st.video(output_video_path)
-
-            # Download button
-            with open(output_video_path, "rb") as file:
-                st.download_button(
-                    label="Download Video with Subtitles",
-                    data=file,
-                    file_name="subtitled_video.mp4",
-                    mime="video/mp4"
+            # Add button to regenerate video preview
+            if st.button("Regenerate Video Preview"):
+                output_video_path = await regenerate_video_preview(
+                    st.session_state.temp_video_path,
+                    st.session_state.subtitle_file,
+                    font_color,
+                    bg_color,
+                    font_size
                 )
+                
+                # Display video preview
+                st.subheader("Video Preview")
+                st.video(output_video_path)
+
+                # Download button
+                with open(output_video_path, "rb") as file:
+                    st.download_button(
+                        label="Download Video with Subtitles",
+                        data=file,
+                        file_name="subtitled_video.mp4",
+                        mime="video/mp4"
+                    )
 
             # Clean up temporary files
             await asyncio.to_thread(os.remove, temp_video_path)
