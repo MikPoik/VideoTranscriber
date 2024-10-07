@@ -13,6 +13,16 @@ logger = logging.getLogger(__name__)
 
 st.set_page_config(page_title="Instagram Reel Transcriber", layout="wide")
 
+# Initialize session state
+if 'processed_video' not in st.session_state:
+    st.session_state.processed_video = None
+if 'transcription' not in st.session_state:
+    st.session_state.transcription = None
+if 'subtitle_file' not in st.session_state:
+    st.session_state.subtitle_file = None
+if 'temp_dir' not in st.session_state:
+    st.session_state.temp_dir = None
+
 async def process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar):
     try:
         # Extract audio
@@ -55,77 +65,84 @@ async def main():
     uploaded_file = st.file_uploader("Upload an Instagram reel video", type=["mp4"])
 
     if uploaded_file is not None:
-        # Save uploaded file temporarily
-        temp_dir = tempfile.mkdtemp()
-        temp_video_path = os.path.join(temp_dir, "input_video.mp4")
-        with open(temp_video_path, "wb") as f:
-            f.write(uploaded_file.getbuffer())
+        # Check if the uploaded file is different from the previously processed one
+        if st.session_state.processed_video != uploaded_file:
+            st.session_state.processed_video = uploaded_file
+            st.session_state.transcription = None
+            st.session_state.subtitle_file = None
 
-        # Extract audio
-        temp_audio_path = os.path.join(temp_dir, "audio.wav")
+            # Save uploaded file temporarily
+            if st.session_state.temp_dir:
+                for file in os.listdir(st.session_state.temp_dir):
+                    os.remove(os.path.join(st.session_state.temp_dir, file))
+            else:
+                st.session_state.temp_dir = tempfile.mkdtemp()
 
-        # Process video
-        progress_bar = st.progress(0)
-        transcription = await process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar)
+            temp_video_path = os.path.join(st.session_state.temp_dir, "input_video.mp4")
+            with open(temp_video_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
 
-        if transcription is not None:
-            # Subtitle customization
-            st.subheader("Customize Subtitles")
-            font_color = st.color_picker("Font Color", "#FFFFFF")
-            bg_color = st.color_picker("Background Color", "#000000")
-            font_size = st.slider("Font Size", 5, 50, 24)
+            # Extract audio
+            temp_audio_path = os.path.join(st.session_state.temp_dir, "audio.wav")
 
+            # Process video
+            progress_bar = st.progress(0)
+            st.session_state.transcription = await process_video(temp_video_path, temp_audio_path, st.session_state.temp_dir, progress_bar)
+
+        if st.session_state.transcription is not None:
             # Generate subtitles
-            progress_bar.progress(0.8)
-            with st.spinner("Generating subtitles..."):
-                subtitle_file = await asyncio.to_thread(generate_subtitles, transcription, temp_dir)
-            st.success("Subtitles generated!")
-            logger.info("Subtitles generated successfully")
+            if st.session_state.subtitle_file is None:
+                progress_bar.progress(0.8)
+                with st.spinner("Generating subtitles..."):
+                    st.session_state.subtitle_file = await asyncio.to_thread(generate_subtitles, st.session_state.transcription, st.session_state.temp_dir)
+                st.success("Subtitles generated!")
+                logger.info("Subtitles generated successfully")
 
             # Display subtitle content
-            with open(subtitle_file, 'r') as f:
+            with open(st.session_state.subtitle_file, 'r') as f:
                 subtitle_content = f.read()
             st.subheader('Generated Subtitles')
             st.text_area('Subtitle Content (.srt)', subtitle_content, height=300)
-
-            # Add subtitles to video
-            progress_bar.progress(0.9)
-            with st.spinner("Adding subtitles to video..."):
-                output_video_path = os.path.join(temp_dir, "output_video.mp4")
-                await asyncio.to_thread(add_subtitles_to_video, temp_video_path, subtitle_file, output_video_path, font_color, bg_color, font_size)
-            progress_bar.progress(1.0)
-            st.success("Video processing complete!")
-            logger.info("Video processing completed successfully")
-
-            # Display video preview
-            st.subheader("Video Preview")
-            st.video(output_video_path)
-
-            # Download button for video
-            with open(output_video_path, "rb") as file:
-                st.download_button(
-                    label="Download Video with Subtitles",
-                    data=file,
-                    file_name="subtitled_video.mp4",
-                    mime="video/mp4"
-                )
-
+            
             # Download button for subtitles
-            with open(subtitle_file, "rb") as file:
+            with open(st.session_state.subtitle_file, "rb") as file:
                 st.download_button(
                     label="Download Subtitles (.srt)",
                     data=file,
                     file_name="subtitles.srt",
                     mime="text/plain"
                 )
+                
+            # Subtitle customization
+            st.subheader("Customize Subtitles")
+            font_color = st.color_picker("Font Color", "#FFFFFF")
+            bg_color = st.color_picker("Background Color", "#000000")
+            font_size = st.slider("Font Size", 5, 50, 24)
+            
+            if st.button("Generate Video with Subtitles"):
+                # Add subtitles to video
+                progress_bar = st.progress(0)
+                progress_bar.progress(0.9)
+                with st.spinner("Adding subtitles to video..."):
+                    output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
+                    temp_video_path = os.path.join(st.session_state.temp_dir, "input_video.mp4")
+                    await asyncio.to_thread(add_subtitles_to_video, temp_video_path, st.session_state.subtitle_file, output_video_path, font_color, bg_color, font_size)
+                progress_bar.progress(1.0)
+                st.success("Video processing complete!")
+                logger.info("Video processing completed successfully")
 
-            # Clean up temporary files
-            await asyncio.to_thread(os.remove, temp_video_path)
-            await asyncio.to_thread(os.remove, temp_audio_path)
-            await asyncio.to_thread(os.remove, subtitle_file)
-            await asyncio.to_thread(os.remove, output_video_path)
-            await asyncio.to_thread(os.rmdir, temp_dir)
-            logger.info("Temporary files cleaned up")
+                # Display video preview
+                st.subheader("Video Preview")
+                st.video(output_video_path)
+
+                # Download button for video
+                with open(output_video_path, "rb") as file:
+                    st.download_button(
+                        label="Download Video with Subtitles",
+                        data=file,
+                        file_name="subtitled_video.mp4",
+                        mime="video/mp4"
+                    )
 
 if __name__ == "__main__":
     asyncio.run(main())
