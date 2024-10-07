@@ -22,41 +22,58 @@ if 'subtitle_file' not in st.session_state:
     st.session_state.subtitle_file = None
 if 'temp_dir' not in st.session_state:
     st.session_state.temp_dir = None
+if 'temp_video_path' not in st.session_state:
+    st.session_state.temp_video_path = None
+if 'temp_audio_path' not in st.session_state:
+    st.session_state.temp_audio_path = None
 
 async def process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar):
     try:
-        # Extract audio
-        progress_bar.progress(0.1)
-        with st.spinner("Extracting audio..."):
-            await asyncio.to_thread(extract_audio, temp_video_path, temp_audio_path)
-        progress_bar.progress(0.3)
-        st.success("Audio extraction complete!")
-        logger.info("Audio extraction completed successfully")
+        transcription = None
+        subtitle_file = None
 
-        # Transcribe audio
-        progress_bar.progress(0.4)
-        with st.spinner("Transcribing audio..."):
-            transcription_task = asyncio.create_task(transcribe_audio(temp_audio_path))
-            try:
-                transcription = await asyncio.wait_for(transcription_task, timeout=300)  # 5-minute timeout
-                logger.info("Transcription completed successfully")
-            except asyncio.TimeoutError:
-                logger.warning("Transcription timed out after 300 seconds")
-                transcription_task.cancel()
+        # Extract audio if not already done
+        if not os.path.exists(temp_audio_path):
+            progress_bar.progress(0.1)
+            with st.spinner("Extracting audio..."):
+                await asyncio.to_thread(extract_audio, temp_video_path, temp_audio_path)
+            progress_bar.progress(0.3)
+            st.success("Audio extraction complete!")
+            logger.info("Audio extraction completed successfully")
+
+        # Transcribe audio if not already done
+        if transcription is None:
+            progress_bar.progress(0.4)
+            with st.spinner("Transcribing audio..."):
+                transcription_task = asyncio.create_task(transcribe_audio(temp_audio_path))
                 try:
-                    await transcription_task
-                except asyncio.CancelledError:
-                    logger.error("Transcription task cancelled due to timeout")
-                    st.error("Transcription timed out. Please try again with a shorter video.")
-                    return None
-        progress_bar.progress(0.7)
-        st.success("Transcription complete!")
+                    transcription = await asyncio.wait_for(transcription_task, timeout=300)  # 5-minute timeout
+                    logger.info("Transcription completed successfully")
+                except asyncio.TimeoutError:
+                    logger.warning("Transcription timed out after 300 seconds")
+                    transcription_task.cancel()
+                    try:
+                        await transcription_task
+                    except asyncio.CancelledError:
+                        logger.error("Transcription task cancelled due to timeout")
+                        st.error("Transcription timed out. Please try again with a shorter video.")
+                        return None, None
+            progress_bar.progress(0.7)
+            st.success("Transcription complete!")
 
-        return transcription
+        # Generate subtitles
+        if subtitle_file is None:
+            progress_bar.progress(0.8)
+            with st.spinner("Generating subtitles..."):
+                subtitle_file = await asyncio.to_thread(generate_subtitles, transcription, temp_dir)
+            st.success("Subtitles generated!")
+            logger.info("Subtitles generated successfully")
+
+        return transcription, subtitle_file
     except Exception as e:
         logger.error(f"Error during video processing: {str(e)}", exc_info=True)
         st.error(f"Error during video processing: {str(e)}")
-        return None
+        return None, None
 
 async def main():
     st.title("Instagram Reel Transcriber and Subtitle Generator")
@@ -78,26 +95,23 @@ async def main():
             else:
                 st.session_state.temp_dir = tempfile.mkdtemp()
 
-            temp_video_path = os.path.join(st.session_state.temp_dir, "input_video.mp4")
-            with open(temp_video_path, "wb") as f:
+            st.session_state.temp_video_path = os.path.join(st.session_state.temp_dir, "input_video.mp4")
+            with open(st.session_state.temp_video_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
 
             # Extract audio
-            temp_audio_path = os.path.join(st.session_state.temp_dir, "audio.wav")
+            st.session_state.temp_audio_path = os.path.join(st.session_state.temp_dir, "audio.wav")
 
             # Process video
             progress_bar = st.progress(0)
-            st.session_state.transcription = await process_video(temp_video_path, temp_audio_path, st.session_state.temp_dir, progress_bar)
+            st.session_state.transcription, st.session_state.subtitle_file = await process_video(
+                st.session_state.temp_video_path, 
+                st.session_state.temp_audio_path, 
+                st.session_state.temp_dir, 
+                progress_bar
+            )
 
-        if st.session_state.transcription is not None:
-            # Generate subtitles
-            if st.session_state.subtitle_file is None:
-                progress_bar.progress(0.8)
-                with st.spinner("Generating subtitles..."):
-                    st.session_state.subtitle_file = await asyncio.to_thread(generate_subtitles, st.session_state.transcription, st.session_state.temp_dir)
-                st.success("Subtitles generated!")
-                logger.info("Subtitles generated successfully")
-
+        if st.session_state.transcription is not None and st.session_state.subtitle_file is not None:
             # Display subtitle content
             with open(st.session_state.subtitle_file, 'r') as f:
                 subtitle_content = f.read()
@@ -125,8 +139,7 @@ async def main():
                 progress_bar.progress(0.9)
                 with st.spinner("Adding subtitles to video..."):
                     output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
-                    temp_video_path = os.path.join(st.session_state.temp_dir, "input_video.mp4")
-                    await asyncio.to_thread(add_subtitles_to_video, temp_video_path, st.session_state.subtitle_file, output_video_path, font_color, bg_color, font_size)
+                    await asyncio.to_thread(add_subtitles_to_video, st.session_state.temp_video_path, st.session_state.subtitle_file, output_video_path, font_color, bg_color, font_size)
                 progress_bar.progress(1.0)
                 st.success("Video processing complete!")
                 logger.info("Video processing completed successfully")
