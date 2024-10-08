@@ -1,3 +1,4 @@
+from numpy import ma
 import streamlit as st
 import os
 from datetime import time
@@ -29,11 +30,16 @@ if 'temp_audio_path' not in st.session_state:
     st.session_state.temp_audio_path = None
 if 'language' not in st.session_state:
     st.session_state.language = 'fi'
+if 'model' not in st.session_state:
+    st.session_state.model = 'whisper-large'
+if 'video_duration' not in st.session_state:
+    st.session_state.video_duration = 90
 
 async def process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar):
     try:
         transcription = None
         subtitle_file = None
+        duration = None
 
         # Extract audio if not already done
         if not os.path.exists(temp_audio_path):
@@ -48,9 +54,9 @@ async def process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar
         if transcription is None:
             progress_bar.progress(0.4)
             with st.spinner("Transcribing audio..."):
-                transcription_task = asyncio.create_task(transcribe_audio(temp_audio_path,st.session_state.language))
+                transcription_task = asyncio.create_task(transcribe_audio(temp_audio_path,st.session_state.language,st.session_state.model))
                 try:
-                    transcription = await asyncio.wait_for(transcription_task, timeout=300)  # 5-minute timeout
+                    transcription, duration = await asyncio.wait_for(transcription_task, timeout=300)  # 5-minute timeout
                     logger.info("Transcription completed successfully")
                 except asyncio.TimeoutError:
                     logger.warning("Transcription timed out after 300 seconds")
@@ -72,7 +78,7 @@ async def process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar
             st.success("Subtitles generated!")
             logger.info("Subtitles generated successfully")
 
-        return transcription, subtitle_file
+        return transcription, subtitle_file, duration
     except Exception as e:
         logger.error(f"Error during video processing: {str(e)}", exc_info=True)
         st.error(f"Error during video processing: {str(e)}")
@@ -80,9 +86,13 @@ async def process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar
 
 async def main():
     st.title("Instagram Reel Transcriber and Subtitle Generator")
-    language = st.text_input("Language for transcription: ", "fi")
-    if st.session_state.language:
+    language = st.text_input("Language for transcription: ", "fi",max_chars=4)
+    model = st.selectbox("Select model:", ["whisper-large","whisper-medium","whisper-tiny","nova-2"])
+    if st.session_state.language != language:
         st.session_state.language = language
+    if st.session_state.model != model:
+        st.session_state.model = model
+        
     # File uploader
     uploaded_file = st.file_uploader("Upload an Instagram reel video", type=["mp4"])
 
@@ -109,12 +119,14 @@ async def main():
 
             # Process video
             progress_bar = st.progress(0)
-            st.session_state.transcription, st.session_state.subtitle_file = await process_video(
+            st.session_state.transcription, st.session_state.subtitle_file,duration = await process_video(
                 st.session_state.temp_video_path, 
                 st.session_state.temp_audio_path, 
                 st.session_state.temp_dir, 
                 progress_bar
             )
+            if st.session_state.video_duration != duration:
+                st.session_state.video_duration = duration
 
         def load_subtitles(file_path):
             with open(file_path, 'r') as f:
@@ -157,8 +169,8 @@ async def main():
 
                 # Single slider for adjusting both start and end times
                 start_end_seconds = st.slider(
-                    f"Timing for Subtitle {index}",
-                    0.0, 90.0, 
+                    f"Timing for Subtitle {index}, original timing: {time_to_seconds(start)} - {time_to_seconds(end)}",
+                    0.0, st.session_state.video_duration, 
                     value=(time_to_seconds(start), time_to_seconds(end)), 
                     step=0.01
                 )
@@ -175,7 +187,7 @@ async def main():
             if st.button("Save Changes"):
                 save_subtitles(st.session_state.subtitle_file, edited_subtitles)
                 st.success("Subtitles saved successfully.")
-            
+                            
             # Download button for subtitles
             with open(st.session_state.subtitle_file, "rb") as file:
                 st.download_button(

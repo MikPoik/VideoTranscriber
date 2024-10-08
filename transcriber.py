@@ -10,7 +10,7 @@ from deepgram import (
 
 DEEPGRAM_API_KEY = os.environ.get("DG_API_KEY")
 
-async def transcribe_audio(audio_file, language="fi"):
+async def transcribe_audio(audio_file, language="fi",model="whisper-large"):
     try:
         if not DEEPGRAM_API_KEY:
             raise ValueError("Deepgram API key is not set. Please set the DG_API_KEY environment variable.")
@@ -25,7 +25,7 @@ async def transcribe_audio(audio_file, language="fi"):
         }
 
         options = PrerecordedOptions(
-            model="whisper-large",
+            model=model,
             smart_format=True,
             language=language,
             punctuate=True,
@@ -35,8 +35,9 @@ async def transcribe_audio(audio_file, language="fi"):
         response = await deepgram.listen.asyncrest.v("1").transcribe_file(
             payload, options, timeout=httpx.Timeout(300.0, connect=10.0)
         )
+        duration = response["metadata"]["duration"]
 
-        return response.to_dict()
+        return response.to_dict(),duration
 
     except Exception as e:
         raise Exception(f"Error transcribing audio with Deepgram: {str(e)}")
