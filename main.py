@@ -85,7 +85,7 @@ async def process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar
         return None, None
 
 async def main():
-    st.title("Instagram Reel Transcriber and Subtitle Generator")
+    st.title("Video transcriber and subtitle generator")
     language = st.text_input("Language for transcription: ", "fi",max_chars=4)
     model = st.selectbox("Select model:", ["whisper-large","whisper-medium","whisper-tiny","nova-2"])
     if st.session_state.language != language:
@@ -94,7 +94,7 @@ async def main():
         st.session_state.model = model
         
     # File uploader
-    uploaded_file = st.file_uploader("Upload an Instagram reel video", type=["mp4"])
+    uploaded_file = st.file_uploader("Upload a video", type=["mp4"])
 
     if uploaded_file is not None:
         # Check if the uploaded file is different from the previously processed one
@@ -169,8 +169,8 @@ async def main():
 
                 # Single slider for adjusting both start and end times
                 start_end_seconds = st.slider(
-                    f"Timing for Subtitle {index}, original timing: {time_to_seconds(start)} - {time_to_seconds(end)}",
-                    0.0, st.session_state.video_duration, 
+                    f"Subtitle {index} timing:",
+                    0.0, st.session_state.video_duration,label_visibility="visible", 
                     value=(time_to_seconds(start), time_to_seconds(end)), 
                     step=0.01
                 )
@@ -178,7 +178,7 @@ async def main():
                 start = format_time_str(start_end_seconds[0])
                 end = format_time_str(start_end_seconds[1])
                 # Subtitle text input
-                text = st.text_input(f"Edit text for Subtitle {index}", text)
+                text = st.text_input(f"Subtitle {index} text:", text,label_visibility="visible")
 
                 # Collect edited subtitles
                 edited_subtitles.append((index, start, end, text))
