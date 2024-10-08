@@ -25,10 +25,11 @@ async def transcribe_audio(audio_file, language="fi"):
         }
 
         options = PrerecordedOptions(
-            model="nova-2",
+            model="whisper-large",
             smart_format=True,
             language=language,
             punctuate=True,
+            paragraphs=True
         )
 
         response = await deepgram.listen.asyncrest.v("1").transcribe_file(

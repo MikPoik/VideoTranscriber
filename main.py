@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+from datetime import time
 import tempfile
 import asyncio
 import logging
@@ -26,6 +27,8 @@ if 'temp_video_path' not in st.session_state:
     st.session_state.temp_video_path = None
 if 'temp_audio_path' not in st.session_state:
     st.session_state.temp_audio_path = None
+if 'language' not in st.session_state:
+    st.session_state.language = 'fi'
 
 async def process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar):
     try:
@@ -45,7 +48,7 @@ async def process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar
         if transcription is None:
             progress_bar.progress(0.4)
             with st.spinner("Transcribing audio..."):
-                transcription_task = asyncio.create_task(transcribe_audio(temp_audio_path))
+                transcription_task = asyncio.create_task(transcribe_audio(temp_audio_path,st.session_state.language))
                 try:
                     transcription = await asyncio.wait_for(transcription_task, timeout=300)  # 5-minute timeout
                     logger.info("Transcription completed successfully")
@@ -77,7 +80,9 @@ async def process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar
 
 async def main():
     st.title("Instagram Reel Transcriber and Subtitle Generator")
-
+    language = st.text_input("Language for transcription: ", "fi")
+    if st.session_state.language:
+        st.session_state.language = language
     # File uploader
     uploaded_file = st.file_uploader("Upload an Instagram reel video", type=["mp4"])
 
@@ -111,12 +116,65 @@ async def main():
                 progress_bar
             )
 
+        def load_subtitles(file_path):
+            with open(file_path, 'r') as f:
+                content = f.read().strip().split('\n\n')
+
+            subtitles = []
+            for subtitle in content:
+                lines = subtitle.split('\n')
+                if len(lines) >= 3:
+                    index = int(lines[0].strip())
+                    timecode = lines[1].strip()
+                    text = ' '.join(lines[2:])
+                    start, end = timecode.split(' --> ')
+                    subtitles.append((index, start, end, text))
+            return subtitles
+            
+        def format_time_str(seconds):
+            hours = int(seconds // 3600)
+            minutes = int((seconds % 3600) // 60)
+            seconds = seconds % 60
+            return f"{hours:02}:{minutes:02}:{seconds:06.3f}"
+            
+        def time_to_seconds(time_str):
+            h, m, s = time_str.split(':')
+            return int(h) * 3600 + int(m) * 60 + float(s)
+            
+        def save_subtitles(file_path, subtitles):
+            with open(file_path, 'w') as f:
+                for index, start, end, text in subtitles:
+                    f.write(f"{index}\n{start} --> {end}\n{text}\n\n")
+                    
+        # Assuming subtitle contents are loaded into st.session_state.subtitle_file
         if st.session_state.transcription is not None and st.session_state.subtitle_file is not None:
-            # Display subtitle content
-            with open(st.session_state.subtitle_file, 'r') as f:
-                subtitle_content = f.read()
-            st.subheader('Generated Subtitles')
-            st.text_area('Subtitle Content (.srt)', subtitle_content, height=300)
+            # Load subtitles
+            subtitles = load_subtitles(st.session_state.subtitle_file)
+
+            st.subheader('Adjust Subtitles')
+            edited_subtitles = []
+            for index, start, end, text in subtitles:
+
+                # Single slider for adjusting both start and end times
+                start_end_seconds = st.slider(
+                    f"Timing for Subtitle {index}",
+                    0.0, 90.0, 
+                    value=(time_to_seconds(start), time_to_seconds(end)), 
+                    step=0.01
+                )
+                # Update timecodes
+                start = format_time_str(start_end_seconds[0])
+                end = format_time_str(start_end_seconds[1])
+                # Subtitle text input
+                text = st.text_input(f"Edit text for Subtitle {index}", text)
+
+                # Collect edited subtitles
+                edited_subtitles.append((index, start, end, text))
+
+            # Button to save changes
+            if st.button("Save Changes"):
+                save_subtitles(st.session_state.subtitle_file, edited_subtitles)
+                st.success("Subtitles saved successfully.")
             
             # Download button for subtitles
             with open(st.session_state.subtitle_file, "rb") as file:
