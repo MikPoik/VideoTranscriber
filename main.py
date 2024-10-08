@@ -23,7 +23,7 @@ if 'transcription' not in st.session_state:
 if 'subtitle_file' not in st.session_state:
     st.session_state.subtitle_file = None
 if 'temp_dir' not in st.session_state:
-    st.session_state.temp_dir = None
+    st.session_state.temp_dir = tempfile.mkdtemp()
 if 'temp_video_path' not in st.session_state:
     st.session_state.temp_video_path = None
 if 'temp_audio_path' not in st.session_state:
