@@ -8,6 +8,7 @@ import logging
 from video_processor import extract_audio, add_subtitles_to_video
 from subtitle_generator import generate_subtitles
 from transcriber import transcribe_audio
+from streamlit_chunk_file_uploader import uploader
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -94,7 +95,7 @@ async def main():
         st.session_state.model = model
         
     # File uploader
-    uploaded_file = st.file_uploader("Upload a video", type=["mp4"])
+    uploaded_file = uploader("uploader", key="chunk_uploader", chunk_size=31)
 
     if uploaded_file is not None:
         # Check if the uploaded file is different from the previously processed one

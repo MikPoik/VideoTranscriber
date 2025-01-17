@@ -6,5 +6,6 @@ requires-python = ">=3.11"
 dependencies = [
     "deepgram-sdk==3.7.3",
     "moviepy==2.0.0.dev2",
+    "streamlit-chunk-file-uploader>=1.0.4",
     "streamlit>=1.39.0",
 ]
