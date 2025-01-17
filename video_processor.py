@@ -18,7 +18,7 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
     max_chars_per_line = int(video_width / (fontsize * 0.6))
     wrapped_text = '\n'.join(wrap(txt, max_chars_per_line))
 
-    txt_clip = TextClip('Arial',text=wrapped_text, size=fontsize, color=font_color, method='label')
+    txt_clip = TextClip('Liberation-Sans',text=wrapped_text, size=fontsize, color=font_color, method='label')
     
     # Create a solid color background
     bg_color_rgb = tuple(int(bg_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
