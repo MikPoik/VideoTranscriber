@@ -232,7 +232,9 @@ async def main():
                 st.session_state.last_file_size = 0
             
             check_output_video_path()
+            
 
+            @st.fragment(run_every=5)
             def check_file_completion():
                 output_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
                 if os.path.exists(output_path):
@@ -249,7 +251,7 @@ async def main():
                 check_file_completion()
             
             # Only show generate button if not processing
-            if not st.session_state.is_processing and st.button("Generate Video with Subtitles"):
+            if not st.session_state.is_processing and st.button("Generate Video with Subtitles",disabled=st.session_state.is_processing):
                 try:
                     st.session_state.is_processing = True
                     st.session_state.processing_complete = False
