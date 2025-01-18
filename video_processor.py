@@ -17,8 +17,9 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
     fontsize = max(int(font_size * (video_height / 720)), 12)  # Ensure minimum font size of 12
     max_chars_per_line = int(video_width / (fontsize * 0.6))
     wrapped_text = '\n'.join(wrap(txt, max_chars_per_line))
-
-    txt_clip = TextClip('DejaVuSans.ttf',text=wrapped_text, size=fontsize, color=font_color, method='label')
+    font_path = os.path.join('fonts', 'LiberationSans-Regular.ttf')
+    print(font_path)
+    txt_clip = TextClip(font_path,text=wrapped_text, size=fontsize, color=font_color, method='label')
     
     # Create a solid color background
     bg_color_rgb = tuple(int(bg_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
