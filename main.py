@@ -209,14 +209,21 @@ async def main():
             if 'processing_complete' not in st.session_state:
                 st.session_state.processing_complete = False
                 
-            if st.button("Generate Video with Subtitles"):
+            if 'processing_started' not in st.session_state:
+                st.session_state.processing_started = False
+                
+            @st.fragment
+            def process_video_fragment():
+                if not st.session_state.processing_started:
+                    return
+                    
                 try:
-                    # Add subtitles to video
+                    status_container = st.empty()
                     progress_bar = st.progress(0)
                     progress_bar.progress(0.9)
-                    with st.spinner("Adding subtitles to video..."):
+                    
+                    with status_container, st.spinner("Adding subtitles to video..."):
                         output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
-                        # Set timeout to 600 seconds (10 minutes)
                         await asyncio.wait_for(
                             asyncio.to_thread(add_subtitles_to_video, 
                                 st.session_state.temp_video_path, 
@@ -228,18 +235,26 @@ async def main():
                                 transparency),
                             timeout=600
                         )
-                    progress_bar.progress(1.0)
-                    st.session_state.processing_complete = True
-                    st.success("Video processing complete!")
-                    logger.info("Video processing completed successfully")
+                        progress_bar.progress(1.0)
+                        st.session_state.processing_complete = True
+                        st.session_state.processing_started = False
+                        status_container.success("Video processing complete!")
+                        logger.info("Video processing completed successfully")
+                        st.rerun(scope="fragment")
                 except asyncio.TimeoutError:
-                    st.error("Video processing timed out. Try with a smaller video or adjust timeout.")
+                    status_container.error("Video processing timed out. Try with a smaller video or adjust timeout.")
                     logger.error("Video processing timed out")
-                    return
+                    st.session_state.processing_started = False
                 except Exception as e:
-                    st.error(f"Error during video processing: {str(e)}")
+                    status_container.error(f"Error during video processing: {str(e)}")
                     logger.error(f"Error during video processing: {str(e)}")
-                    return
+                    st.session_state.processing_started = False
+
+            if st.button("Generate Video with Subtitles"):
+                st.session_state.processing_started = True
+                st.rerun(scope="fragment")
+                
+            process_video_fragment()
 
             # Show video preview and download button if processing is complete
             if st.session_state.processing_complete and os.path.exists(output_video_path):
