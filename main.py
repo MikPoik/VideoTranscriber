@@ -205,18 +205,44 @@ async def main():
             font_size = st.slider("Font Size", 5, 50, 24)
             transparency = st.slider("Background Transparency", 0, 100, 50)
             
+            # Add processing status to session state
+            if 'processing_complete' not in st.session_state:
+                st.session_state.processing_complete = False
+                
             if st.button("Generate Video with Subtitles"):
-                # Add subtitles to video
-                progress_bar = st.progress(0)
-                progress_bar.progress(0.9)
-                with st.spinner("Adding subtitles to video..."):
-                    output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
-                    await asyncio.to_thread(add_subtitles_to_video, st.session_state.temp_video_path, st.session_state.subtitle_file, output_video_path, font_color, bg_color, font_size, transparency)
-                progress_bar.progress(1.0)
-                st.success("Video processing complete!")
-                logger.info("Video processing completed successfully")
+                try:
+                    # Add subtitles to video
+                    progress_bar = st.progress(0)
+                    progress_bar.progress(0.9)
+                    with st.spinner("Adding subtitles to video..."):
+                        output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
+                        # Set timeout to 600 seconds (10 minutes)
+                        await asyncio.wait_for(
+                            asyncio.to_thread(add_subtitles_to_video, 
+                                st.session_state.temp_video_path, 
+                                st.session_state.subtitle_file, 
+                                output_video_path, 
+                                font_color, 
+                                bg_color, 
+                                font_size, 
+                                transparency),
+                            timeout=600
+                        )
+                    progress_bar.progress(1.0)
+                    st.session_state.processing_complete = True
+                    st.success("Video processing complete!")
+                    logger.info("Video processing completed successfully")
+                except asyncio.TimeoutError:
+                    st.error("Video processing timed out. Try with a smaller video or adjust timeout.")
+                    logger.error("Video processing timed out")
+                    return
+                except Exception as e:
+                    st.error(f"Error during video processing: {str(e)}")
+                    logger.error(f"Error during video processing: {str(e)}")
+                    return
 
-                # Display video preview
+            # Show video preview and download button if processing is complete
+            if st.session_state.processing_complete and os.path.exists(output_video_path):
                 st.subheader("Video Preview")
                 st.video(output_video_path)
 
