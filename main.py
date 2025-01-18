@@ -93,7 +93,7 @@ async def main():
         st.session_state.language = language
     if st.session_state.model != model:
         st.session_state.model = model
-        
+
     # File uploader
     uploaded_file = uploader("uploader", key="chunk_uploader", chunk_size=31)
 
@@ -143,22 +143,22 @@ async def main():
                     start, end = timecode.split(' --> ')
                     subtitles.append((index, start, end, text))
             return subtitles
-            
+
         def format_time_str(seconds):
             hours = int(seconds // 3600)
             minutes = int((seconds % 3600) // 60)
             seconds = seconds % 60
             return f"{hours:02}:{minutes:02}:{seconds:06.3f}"
-            
+
         def time_to_seconds(time_str):
             h, m, s = time_str.split(':')
             return int(h) * 3600 + int(m) * 60 + float(s)
-            
+
         def save_subtitles(file_path, subtitles):
             with open(file_path, 'w') as f:
                 for index, start, end, text in subtitles:
                     f.write(f"{index}\n{start} --> {end}\n{text}\n\n")
-                    
+
         # Assuming subtitle contents are loaded into st.session_state.subtitle_file
         if st.session_state.transcription is not None and st.session_state.subtitle_file is not None:
             # Load subtitles
@@ -188,7 +188,7 @@ async def main():
             if st.button("Save Changes"):
                 save_subtitles(st.session_state.subtitle_file, edited_subtitles)
                 st.success("Subtitles saved successfully.")
-                            
+
             # Download button for subtitles
             with open(st.session_state.subtitle_file, "rb") as file:
                 st.download_button(
@@ -197,31 +197,31 @@ async def main():
                     file_name="subtitles.srt",
                     mime="text/plain"
                 )
-                
+
             # Subtitle customization
             st.subheader("Customize Subtitles")
             font_color = st.color_picker("Font Color", "#FFFFFF")
             bg_color = st.color_picker("Background Color", "#000000")
             font_size = st.slider("Font Size", 5, 50, 24)
             transparency = st.slider("Background Transparency", 0, 100, 50)
-            
+
             # Add processing status to session state
             if 'processing_complete' not in st.session_state:
                 st.session_state.processing_complete = False
-                
+
             if 'processing_started' not in st.session_state:
                 st.session_state.processing_started = False
-                
+
             @st.fragment
-            def process_video_fragment():
+            async def process_video_fragment():
                 if not st.session_state.processing_started:
                     return
-                    
+
                 try:
                     status_container = st.empty()
                     progress_bar = st.progress(0)
                     progress_bar.progress(0.9)
-                    
+
                     with status_container, st.spinner("Adding subtitles to video..."):
                         output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
                         await asyncio.wait_for(
@@ -253,8 +253,8 @@ async def main():
             if st.button("Generate Video with Subtitles"):
                 st.session_state.processing_started = True
                 st.rerun(scope="fragment")
-                
-            process_video_fragment()
+
+            asyncio.run(process_video_fragment())
 
             # Show video preview and download button if processing is complete
             if st.session_state.processing_complete and os.path.exists(output_video_path):
