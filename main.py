@@ -203,6 +203,7 @@ async def main():
             font_color = st.color_picker("Font Color", "#FFFFFF")
             bg_color = st.color_picker("Background Color", "#000000")
             font_size = st.slider("Font Size", 5, 50, 24)
+            transparency = st.slider("Background Transparency", 0, 100, 50)
             
             if st.button("Generate Video with Subtitles"):
                 # Add subtitles to video
@@ -210,7 +211,7 @@ async def main():
                 progress_bar.progress(0.9)
                 with st.spinner("Adding subtitles to video..."):
                     output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
-                    await asyncio.to_thread(add_subtitles_to_video, st.session_state.temp_video_path, st.session_state.subtitle_file, output_video_path, font_color, bg_color, font_size)
+                    await asyncio.to_thread(add_subtitles_to_video, st.session_state.temp_video_path, st.session_state.subtitle_file, output_video_path, font_color, bg_color, font_size, transparency)
                 progress_bar.progress(1.0)
                 st.success("Video processing complete!")
                 logger.info("Video processing completed successfully")

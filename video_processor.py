@@ -11,7 +11,7 @@ def extract_audio(video_path, audio_path):
     video.close()
     audio.close()
 
-def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font_size):
+def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font_size, transparency):
     video_width, video_height = video_size
 
     fontsize = max(int(font_size * (video_height / 720)), 12)  # Ensure minimum font size of 12
@@ -23,7 +23,7 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
     
     # Create a background with alpha
     bg_color_rgb = tuple(int(bg_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
-    alpha = 128  # 0 is fully transparent, 255 is fully opaque
+    alpha = int(255 * (1 - transparency/100))  # Convert transparency percentage to alpha value
     color_array = np.full((txt_clip.h + 10, txt_clip.w + 10, 4), (*bg_color_rgb, alpha), dtype=np.uint8)
     color_clip = ImageClip(color_array, transparent=True)
     
@@ -35,12 +35,12 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
 
     return subtitle_clip.with_start(start).with_end(end)
 
-def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, bg_color, font_size):
+def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, bg_color, font_size, transparency):
     video = VideoFileClip(video_path)
     print(f"Original video resolution: {video.w}x{video.h}")
     
     def create_subtitle_clip_wrapper(txt, start, end):
-        return create_subtitle_clip(txt, start, end, (video.w, video.h), font_color, bg_color, font_size)
+        return create_subtitle_clip(txt, start, end, (video.w, video.h), font_color, bg_color, font_size, transparency)
 
     subtitles = []
     with open(subtitle_file, 'r') as f:
