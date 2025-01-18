@@ -35,6 +35,12 @@ if 'model' not in st.session_state:
     st.session_state.model = 'whisper-large'
 if 'video_duration' not in st.session_state:
     st.session_state.video_duration = 90
+if 'keep_alive' not in st.session_state:
+    st.session_state.keep_alive = 0
+if 'output_video_path' not in st.session_state:
+    st.session_state.output_video_path = None
+if 'processing_completed' not in st.session_state:
+        st.session_state.processing_completed = False
 
 async def process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar):
     try:
@@ -158,7 +164,19 @@ async def main():
             with open(file_path, 'w') as f:
                 for index, start, end, text in subtitles:
                     f.write(f"{index}\n{start} --> {end}\n{text}\n\n")
-                    
+
+        @st.fragment(run_every=10)
+        def check_output_video_path():
+            if st.session_state.output_video_path is not None:
+                print(f"Output video path: {st.session_state.output_video_path}")
+            else:
+                if os.path.exists(os.path.join(st.session_state.temp_dir, "output_video.mp4")):
+                    print(os.path.join(st.session_state.temp_dir, "output_video.mp4"))
+                    st.session_state.output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
+                    st.session_state.processing_complete = True
+                
+
+                
         # Assuming subtitle contents are loaded into st.session_state.subtitle_file
         if st.session_state.transcription is not None and st.session_state.subtitle_file is not None:
             # Load subtitles
@@ -208,7 +226,8 @@ async def main():
             # Add processing status to session state
             if 'processing_complete' not in st.session_state:
                 st.session_state.processing_complete = False
-                
+            
+            check_output_video_path()
             if st.button("Generate Video with Subtitles"):
                 try:
                     # Add subtitles to video
@@ -233,7 +252,7 @@ async def main():
                     st.success("Video processing complete!")
                     logger.info("Video processing completed successfully")
                 except asyncio.TimeoutError:
-                    st.error("Video processing timed out. Try with a smaller video or adjust timeout.")
+                    st.error("Video processing timed out. Try with a smaller video.")
                     logger.error("Video processing timed out")
                     return
                 except Exception as e:
@@ -241,13 +260,14 @@ async def main():
                     logger.error(f"Error during video processing: {str(e)}")
                     return
 
+
             # Show video preview and download button if processing is complete
-            if st.session_state.processing_complete and os.path.exists(output_video_path):
+            if st.session_state.processing_complete and st.session_state.output_video_path and os.path.exists(st.session_state.output_video_path):
                 st.subheader("Video Preview")
-                st.video(output_video_path)
+                st.video(st.session_state.output_video_path)
 
                 # Download button for video
-                with open(output_video_path, "rb") as file:
+                with open(st.session_state.output_video_path, "rb") as file:
                     st.download_button(
                         label="Download Video with Subtitles",
                         data=file,
