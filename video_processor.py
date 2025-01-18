@@ -18,7 +18,6 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
     max_chars_per_line = int(video_width / (fontsize * 0.6))
     wrapped_text = '\n'.join(wrap(txt, max_chars_per_line))
     font_path = os.path.join('fonts', 'LiberationSans-Regular.ttf')
-    print(font_path)
     txt_clip = TextClip(font_path,text=wrapped_text, font_size=fontsize, color=font_color, method='label')
     
     # Create a background with alpha
@@ -61,7 +60,7 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
         final_video = video
     
     print(f"Output video resolution: {final_video.w}x{final_video.h}")
-    final_video.write_videofile(output_path, codec='libx264', audio_codec='aac', preset='ultrafast')
+    final_video.write_videofile(output_path, preset='ultrafast',threads=4)
     video.close()
     final_video.close()
 
