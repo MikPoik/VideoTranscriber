@@ -250,8 +250,9 @@ async def main():
                 st.spinner("Processing video...")
                 check_file_completion()
             
-            # Only show generate button if not processing
-            if not st.session_state.is_processing and st.button("Generate Video with Subtitles",disabled=st.session_state.is_processing):
+            # Create generate button with proper disable state
+            generate_button = st.button("Generate Video with Subtitles", disabled=st.session_state.is_processing, key="generate_button")
+            if not st.session_state.is_processing and generate_button:
                 try:
                     st.session_state.is_processing = True
                     st.session_state.processing_complete = False
