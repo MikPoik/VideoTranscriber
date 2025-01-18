@@ -246,27 +246,31 @@ async def main():
                     st.session_state.last_file_size = current_size
                 return False
 
-            if st.session_state.is_processing:
-                st.spinner("Processing video...")
-                check_file_completion()
-            
             # Initialize button state if not exists
             if 'button_state' not in st.session_state:
                 st.session_state.button_state = False
 
+            # Create processing status container
+            status_container = st.empty()
+            if st.session_state.is_processing:
+                with status_container:
+                    st.spinner("Processing video...")
+                check_file_completion()
+
             # Create generate button with proper disable state
             generate_button = st.button("Generate Video with Subtitles", 
-                                      disabled=st.session_state.is_processing or st.session_state.button_state,
+                                      disabled=st.session_state.is_processing,
                                       key="generate_button")
             
-            if generate_button and not st.session_state.is_processing:
+            if generate_button:
                 st.session_state.button_state = True
+                st.session_state.is_processing = True
+                st.session_state.processing_complete = False
+                st.session_state.last_file_size = 0
+                progress_bar = st.progress(0)
+                progress_bar.progress(0.9)
+                
                 try:
-                    st.session_state.is_processing = True
-                    st.session_state.processing_complete = False
-                    st.session_state.last_file_size = 0
-                    progress_bar = st.progress(0)
-                    progress_bar.progress(0.9)
                     
                     output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
                     # Set timeout to 600 seconds (10 minutes)
