@@ -21,10 +21,11 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
     print(font_path)
     txt_clip = TextClip(font_path,text=wrapped_text, font_size=fontsize, color=font_color, method='label')
     
-    # Create a solid color background
+    # Create a background with alpha
     bg_color_rgb = tuple(int(bg_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
-    color_array = np.full((txt_clip.h + 10, txt_clip.w + 10, 3), bg_color_rgb, dtype=np.uint8)
-    color_clip = ImageClip(color_array)
+    alpha = 128  # 0 is fully transparent, 255 is fully opaque
+    color_array = np.full((txt_clip.h + 10, txt_clip.w + 10, 4), (*bg_color_rgb, alpha), dtype=np.uint8)
+    color_clip = ImageClip(color_array, transparent=True)
     
     # Overlay the text clip on the color clip
     txt_clip = txt_clip.with_position((5, 5))
