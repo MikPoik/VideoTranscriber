@@ -19,7 +19,7 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
     wrapped_text = '\n'.join(wrap(txt, max_chars_per_line))
     font_path = os.path.join('fonts', 'LiberationSans-Regular.ttf')
     print(font_path)
-    txt_clip = TextClip(font_path,text=wrapped_text, size=fontsize, color=font_color, method='label')
+    txt_clip = TextClip(font_path,text=wrapped_text, font_size=fontsize, color=font_color, method='label')
     
     # Create a solid color background
     bg_color_rgb = tuple(int(bg_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
@@ -27,12 +27,12 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
     color_clip = ImageClip(color_array)
     
     # Overlay the text clip on the color clip
-    txt_clip = txt_clip.set_position((5, 5))
+    txt_clip = txt_clip.with_position((5, 5))
     subtitle_clip = CompositeVideoClip([color_clip, txt_clip])
     
-    subtitle_clip = subtitle_clip.set_position(('center', video_height - subtitle_clip.h - 50))
+    subtitle_clip = subtitle_clip. with_position(('center', video_height - subtitle_clip.h - 50))
 
-    return subtitle_clip.set_start(start).set_end(end)
+    return subtitle_clip.with_start(start).with_end(end)
 
 def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, bg_color, font_size):
     video = VideoFileClip(video_path)
