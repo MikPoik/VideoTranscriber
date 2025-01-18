@@ -223,46 +223,71 @@ async def main():
             font_size = st.slider("Font Size", 5, 50, 24)
             transparency = st.slider("Background Transparency", 0, 100, 50)
             
-            # Add processing status to session state
+            # Initialize processing states
+            if 'is_processing' not in st.session_state:
+                st.session_state.is_processing = False
             if 'processing_complete' not in st.session_state:
                 st.session_state.processing_complete = False
+            if 'last_file_size' not in st.session_state:
+                st.session_state.last_file_size = 0
             
             check_output_video_path()
-            if st.button("Generate Video with Subtitles"):
+
+            def check_file_completion():
+                output_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
+                if os.path.exists(output_path):
+                    current_size = os.path.getsize(output_path)
+                    if current_size == st.session_state.last_file_size and current_size > 0:
+                        st.session_state.processing_complete = True
+                        st.session_state.is_processing = False
+                        return True
+                    st.session_state.last_file_size = current_size
+                return False
+
+            if st.session_state.is_processing:
+                st.spinner("Processing video...")
+                check_file_completion()
+            
+            # Only show generate button if not processing
+            if not st.session_state.is_processing and st.button("Generate Video with Subtitles"):
                 try:
-                    # Add subtitles to video
+                    st.session_state.is_processing = True
+                    st.session_state.processing_complete = False
+                    st.session_state.last_file_size = 0
                     progress_bar = st.progress(0)
                     progress_bar.progress(0.9)
-                    with st.spinner("Adding subtitles to video..."):
-                        output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
-                        # Set timeout to 600 seconds (10 minutes)
-                        await asyncio.wait_for(
-                            asyncio.to_thread(add_subtitles_to_video, 
-                                st.session_state.temp_video_path, 
-                                st.session_state.subtitle_file, 
-                                output_video_path, 
-                                font_color, 
-                                bg_color, 
-                                font_size, 
-                                transparency),
-                            timeout=600
-                        )
+                    
+                    output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
+                    # Set timeout to 600 seconds (10 minutes)
+                    await asyncio.wait_for(
+                        asyncio.to_thread(add_subtitles_to_video, 
+                            st.session_state.temp_video_path, 
+                            st.session_state.subtitle_file, 
+                            output_video_path, 
+                            font_color, 
+                            bg_color, 
+                            font_size, 
+                            transparency),
+                        timeout=600
+                    )
                     progress_bar.progress(1.0)
                     st.session_state.processing_complete = True
+                    st.session_state.is_processing = False
                     st.success("Video processing complete!")
                     logger.info("Video processing completed successfully")
                 except asyncio.TimeoutError:
+                    st.session_state.is_processing = False
                     st.error("Video processing timed out. Try with a smaller video.")
                     logger.error("Video processing timed out")
                     return
                 except Exception as e:
+                    st.session_state.is_processing = False
                     st.error(f"Error during video processing: {str(e)}")
                     logger.error(f"Error during video processing: {str(e)}")
                     return
 
-
             # Show video preview and download button if processing is complete
-            if st.session_state.processing_complete and st.session_state.output_video_path and os.path.exists(st.session_state.output_video_path):
+            if not st.session_state.is_processing and st.session_state.processing_complete and st.session_state.output_video_path and os.path.exists(st.session_state.output_video_path):
                 st.subheader("Video Preview")
                 st.video(st.session_state.output_video_path)
 
