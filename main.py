@@ -249,14 +249,20 @@ async def main():
                     return True
                 return False
 
-            # Generate button
-            if st.button("Generate Video with Subtitles", key="generate_button"):
+            # Generate buttons
+            col1, col2 = st.columns(2)
+            with col1:
+                generate = st.button("Generate Video with Subtitles", key="generate_button")
+            with col2:
+                regenerate = st.button("Regenerate Video", key="regenerate_button", disabled=not os.path.exists(os.path.join(st.session_state.temp_dir, "output_video.mp4")))
+
+            if generate or regenerate:
                 if st.session_state.can_process:
                     output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
                     
                     # Check if video needs to be generated
                     needs_processing = True
-                    if os.path.exists(output_video_path):
+                    if not regenerate and os.path.exists(output_video_path):
                         current_size = os.path.getsize(output_video_path)
                         if st.session_state.last_file_size == current_size:
                             needs_processing = False
