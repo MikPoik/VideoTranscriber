@@ -248,8 +248,10 @@ async def main():
                         return False
                     return True
                 return False
+                
 
             # Generate button
+            video_ready = check_video_status()
             if st.button("Generate Video with Subtitles", key="generate_button"):
                 if st.session_state.can_process:
                     output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
@@ -304,7 +306,7 @@ async def main():
                         st.info(st.session_state.processing_status)
 
             # Show video preview and download button if video is ready
-            video_ready = check_video_status()
+            
             if video_ready:
                 output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
                 with preview_container:
