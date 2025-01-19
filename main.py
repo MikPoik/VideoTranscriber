@@ -259,10 +259,12 @@ async def main():
             def trigger_generation():
                 st.session_state.generate_video = True
                 st.session_state.can_process = False
+                st.session_state.video_ready = False
+                st.session_state.last_file_size = None
 
             # Generate button
             video_ready = check_video_status()
-            st.button("Generate Video with Subtitles", key="generate_button", on_click=trigger_generation, disabled=not st.session_state.can_process)
+            st.button("Generate/Regenerate Video", key="generate_button", on_click=trigger_generation)
 
             # Handle video generation based on state
             if st.session_state.generate_video and not st.session_state.can_process:
