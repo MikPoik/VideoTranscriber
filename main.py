@@ -43,6 +43,8 @@ if 'processing_completed' not in st.session_state:
         st.session_state.processing_completed = False
 if 'can_process' not in st.session_state:
     st.session_state.can_process = True
+if 'video_ready' not in st.session_state:
+    st.session_state.video_ready = False
 
 async def process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar):
     try:
@@ -293,6 +295,7 @@ async def main():
                         progress_bar.progress(1.0)
                         st.session_state.processing_status = "Video processing complete!"
                         st.session_state.last_file_size = os.path.getsize(output_video_path)
+                        st.session_state.video_ready = True
                         logger.info("Video processing completed successfully")
                     except asyncio.TimeoutError:
                         st.session_state.processing_status = "Video processing timed out. Try with a smaller video."
@@ -303,6 +306,7 @@ async def main():
                     
                     st.session_state.generate_video = False
                     st.session_state.can_process = True
+                    st.rerun()
 
             # Update status message
             with status_container:
@@ -315,8 +319,7 @@ async def main():
                         st.info(st.session_state.processing_status)
 
             # Show video preview and download button if video is ready
-            
-            if video_ready:
+            if check_video_status() or ('video_ready' in st.session_state and st.session_state.video_ready):
                 output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
                 with preview_container:
                     st.subheader("Video Preview")
