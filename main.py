@@ -252,6 +252,7 @@ async def main():
 
             # Create processing status container
             status_container = st.empty()
+            #check_file_completion()
             if st.session_state.is_processing:
                 with status_container:
                     st.spinner("Processing video...")
