@@ -34,9 +34,10 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
 
     return subtitle_clip.with_start(start).with_end(end)
 
-def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, bg_color, font_size, transparency):
+def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, bg_color, font_size, transparency,temp_file_path):
     video = VideoFileClip(video_path)
     print(f"Original video resolution: {video.w}x{video.h}")
+    print(temp_file_path)
     
     def create_subtitle_clip_wrapper(txt, start, end):
         return create_subtitle_clip(txt, start, end, (video.w, video.h), font_color, bg_color, font_size, transparency)
@@ -58,9 +59,11 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
         final_video = CompositeVideoClip([video] + subtitle_clips, size=video.size)
     else:
         final_video = video
-    
+    temp_audio_file = temp_file_path.split("/")[2]
+    temp_audio_file += ".mp3"
+    print(temp_audio_file)
     print(f"Output video resolution: {final_video.w}x{final_video.h}")
-    final_video.write_videofile(output_path, preset='ultrafast',threads=4)
+    final_video.write_videofile(output_path, preset='ultrafast',threads=4,temp_audiofile=temp_audio_file)
     video.close()
     final_video.close()
 

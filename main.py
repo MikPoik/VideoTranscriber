@@ -255,22 +255,30 @@ async def main():
                 st.session_state.last_file_size = None
 
             # Generate button
-            #video_ready = check_video_status()
+
             st.button("Generate/Regenerate Video", key="generate_button", on_click=trigger_generation)
 
             # Handle video generation based on state
             if st.session_state.generate_video and not st.session_state.can_process:
                 output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
+                output_temp_audiofile =  st.session_state.temp_dir.split("/")[2]
+                output_temp_audiofile += ".mp3"
                 
                 # Check if video needs to be generated
                 needs_processing = True
                 if os.path.exists(output_video_path):
                     current_size = os.path.getsize(output_video_path)
-                    if st.session_state.last_file_size == current_size:
+                    print(current_size)
+                    print(st.session_state.last_file_size)
+                    if st.session_state.last_file_size == current_size :
+                        print("Video already generated")
                         needs_processing = False
                 
-                if needs_processing:
+                if needs_processing and not os.path.exists(output_temp_audiofile):
+                    print(os.path.exists(output_temp_audiofile))
                     st.session_state.processing_status = "Processing video..."
+                    status_placeholder = st.empty()
+                    status_placeholder.info("Processing video... This might take a while..")
                     progress_bar = st.progress(0)
                     progress_bar.progress(0.9)
 
@@ -283,7 +291,8 @@ async def main():
                                 font_color, 
                                 bg_color, 
                                 font_size, 
-                                transparency),
+                                transparency,
+                                st.session_state.temp_dir),
                             timeout=600
                         )
                         progress_bar.progress(1.0)
