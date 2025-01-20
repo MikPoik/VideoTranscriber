@@ -1,4 +1,6 @@
 import os
+import time
+import logging
 from moviepy import VideoFileClip, TextClip, CompositeVideoClip, ImageClip
 from moviepy.video.tools.subtitles import SubtitlesClip
 from textwrap import wrap
@@ -63,7 +65,16 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
 
 
     print(f"Output video resolution: {final_video.w}x{final_video.h}")
+    
+    # Start timing
+    start_time = time.time()
+    
     final_video.write_videofile(output_path, preset='ultrafast',temp_audiofile=temp_file_name)
+    
+    # Calculate duration
+    duration = time.time() - start_time
+    logging.info(f"Video write completed in {duration:.2f} seconds")
+    
     video.close()
     final_video.close()
 
