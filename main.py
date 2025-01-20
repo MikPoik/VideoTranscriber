@@ -169,15 +169,7 @@ async def main():
                 for index, start, end, text in subtitles:
                     f.write(f"{index}\n{start} --> {end}\n{text}\n\n")
 
-        @st.fragment(run_every=10)
-        def check_output_video_path():
-            if st.session_state.output_video_path is not None:
-                print(f"Output video path: {st.session_state.output_video_path}")
-            else:
-                if os.path.exists(os.path.join(st.session_state.temp_dir, "output_video.mp4")):
-                    print(os.path.join(st.session_state.temp_dir, "output_video.mp4"))
-                    st.session_state.output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
-                    st.session_state.processing_complete = True
+
 
 
 
@@ -239,7 +231,7 @@ async def main():
             status_container = st.empty()
             preview_container = st.container()
 
-            @st.fragment(run_every=1)
+            @st.fragment(run_every=3)
             def check_video_status():
                 output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
                 
@@ -263,7 +255,7 @@ async def main():
                 st.session_state.last_file_size = None
 
             # Generate button
-            video_ready = check_video_status()
+            #video_ready = check_video_status()
             st.button("Generate/Regenerate Video", key="generate_button", on_click=trigger_generation)
 
             # Handle video generation based on state
