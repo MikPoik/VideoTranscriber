@@ -37,11 +37,6 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
 
 def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, bg_color, font_size, transparency,temp_file_name):
     video = VideoFileClip(video_path)
-    # Scale to 720p while maintaining aspect ratio
-    target_height = 720
-    aspect_ratio = video.w / video.h
-    target_width = int(target_height * aspect_ratio)
-    video = video.resize(height=target_height)
     print(f"Original video resolution: {video.w}x{video.h}")
     print(temp_file_name)
     
