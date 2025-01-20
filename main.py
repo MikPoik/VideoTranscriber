@@ -240,20 +240,17 @@ async def main():
 
             @st.fragment(run_every=3)
             def check_video_status(temp_filename):
-                print("check video status")
                 output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
                 
                 if os.path.exists(output_video_path):
                     current_size = os.path.getsize(output_video_path)
-                    print(f"Current size: {current_size}")
-                    print(f"Last size: {st.session_state.last_file_size}")
 
                     # If size changed or processing just completed
                     if st.session_state.last_file_size != current_size or st.session_state.processing_completed:
                         st.session_state.last_file_size = current_size
                         st.session_state.processing_completed = False
                         output_temp_audiofile_path = os.path.join(os.getcwd(), st.session_state.temp_audio_file)
-                        print(output_temp_audiofile_path)
+
                         if not os.path.exists(output_temp_audiofile_path):
                             st.session_state.processing_status = "Video processing complete!"
                             st.rerun()
@@ -282,15 +279,14 @@ async def main():
                     st.session_state.temp_audio_file = str(random.randint(1000, 10000)) + ".mp3"
                     
                 output_temp_audiofile_path = os.path.join(os.getcwd(), st.session_state.temp_audio_file)
-                print(output_temp_audiofile_path)
+
                 # Check if video needs to be generated
                 needs_processing = True
                 if os.path.exists(output_video_path):
                     current_size = os.path.getsize(output_video_path)
-                    print(current_size)
-                    print(st.session_state.last_file_size)
+
                     if os.path.exists(output_temp_audiofile_path):
-                        print("temp_file_exsits")
+                        print("temp_file_exists")
                         needs_processing = False
 
                     if st.session_state.last_file_size == current_size:
@@ -298,8 +294,6 @@ async def main():
                         needs_processing = False
                 
                 if needs_processing:
-                    if os.path.exists(output_temp_audiofile_path):
-                        print(f"Using existing temp audio file: {output_temp_audiofile_path}")
                     st.session_state.processing_status = "Processing video..."
                     status_placeholder = st.empty()
                     status_placeholder.info("Processing video... This might take a while..")
@@ -350,7 +344,6 @@ async def main():
 
             # Show video preview and download button if video is ready
             is_ready = check_video_status(st.session_state.temp_audio_file)
-            print(is_ready)
             if is_ready or st.session_state.video_ready:
                 print("video preview ready")
                 output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
