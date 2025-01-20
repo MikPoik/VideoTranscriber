@@ -59,9 +59,11 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
 
     if subtitles:
         from multiprocessing import Pool, cpu_count
-        
+
+        # Get CPU count once
+        num_cores = cpu_count()
         # Create clips in parallel using available CPU cores
-        with Pool(processes=cpu_count()) as pool:
+        with Pool(processes=num_cores) as pool:
             subtitle_clips = pool.starmap(
                 create_subtitle_clip_wrapper,
                 [(sub[1], sub[0][0], sub[0][1]) for sub in subtitles]
@@ -83,7 +85,7 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
         temp_audiofile=temp_file_name,
         codec='libx264',
         audio_codec='aac',
-        threads=cpu_count(),
+        threads=num_cores,
         ffmpeg_params=['-crf', '28']  # Balanced quality/compression
     )
     
