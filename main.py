@@ -9,6 +9,7 @@ from video_processor import extract_audio, add_subtitles_to_video
 from subtitle_generator import generate_subtitles
 from transcriber import transcribe_audio
 from streamlit_chunk_file_uploader import uploader
+import random
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -43,6 +44,8 @@ if 'can_process' not in st.session_state:
     st.session_state.can_process = True
 if 'video_ready' not in st.session_state:
     st.session_state.video_ready = False
+if 'temp_audio_file' not in st.session_state:
+    st.session_state.temp_audio_file = str(random.randint(1000, 10000))+".mp3"
 
 async def process_video(temp_video_path, temp_audio_path, temp_dir, progress_bar):
     try:
@@ -111,6 +114,12 @@ async def main():
             st.session_state.processed_video = uploaded_file
             st.session_state.transcription = None
             st.session_state.subtitle_file = None
+            st.session_state.can_process = False
+            st.session_state.can_process = True
+            st.session_state.video_ready = False
+            st.session_state.last_file_size = None
+            st.session_state.processing_status = ""
+            st.session_state.temp_audio_file = str(random.randint(1000, 10000))+".mp3"
 
             # Save uploaded file temporarily
             if st.session_state.temp_dir:
@@ -230,7 +239,7 @@ async def main():
             preview_container = st.container()
 
             @st.fragment(run_every=3)
-            def check_video_status():
+            def check_video_status(temp_filename):
                 print("check video status")
                 output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
                 
@@ -243,8 +252,11 @@ async def main():
                     if st.session_state.last_file_size != current_size or st.session_state.processing_completed:
                         st.session_state.last_file_size = current_size
                         st.session_state.processing_completed = False
-                        st.rerun()
-                        return True
+                        output_temp_audiofile_path = os.path.join(os.getcwd(), st.session_state.temp_audio_file)
+                        print(output_temp_audiofile_path)
+                        if not os.path.exists(output_temp_audiofile_path):
+                            st.session_state.processing_status = "Video processing complete!"
+                            st.rerun()
                     return True
                 return False
                 
@@ -266,9 +278,10 @@ async def main():
             # Handle video generation based on state
             if st.session_state.generate_video and not st.session_state.can_process:
                 output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
-                output_temp_audiofile =  st.session_state.temp_dir.split("/")[2]
-                output_temp_audiofile += ".mp3"
-                output_temp_audiofile_path = os.path.join(os.getcwd(), output_temp_audiofile)
+                if not os.path.exists(st.session_state.temp_audio_file):
+                    st.session_state.temp_audio_file = str(random.randint(1000, 10000)) + ".mp3"
+                    
+                output_temp_audiofile_path = os.path.join(os.getcwd(), st.session_state.temp_audio_file)
                 print(output_temp_audiofile_path)
                 # Check if video needs to be generated
                 needs_processing = True
@@ -279,19 +292,22 @@ async def main():
                     if os.path.exists(output_temp_audiofile_path):
                         print("temp_file_exsits")
                         needs_processing = False
+
                     if st.session_state.last_file_size == current_size:
                         print("Video already generated")
                         needs_processing = False
                 
                 if needs_processing:
                     if os.path.exists(output_temp_audiofile_path):
-                        print(f"Using existing temp audio file: {output_temp_audiofile}")
+                        print(f"Using existing temp audio file: {output_temp_audiofile_path}")
                     st.session_state.processing_status = "Processing video..."
                     status_placeholder = st.empty()
                     status_placeholder.info("Processing video... This might take a while..")
                     progress_bar = st.progress(0)
                     progress_bar.progress(0.9)
                     st.session_state.processing_completed = False
+
+                    
                     try:
                         await asyncio.wait_for(
                             asyncio.to_thread(add_subtitles_to_video, 
@@ -302,7 +318,7 @@ async def main():
                                 bg_color, 
                                 font_size, 
                                 transparency,
-                                st.session_state.temp_dir),
+                                output_temp_audiofile_path),
                             timeout=600
                         )
                         progress_bar.progress(1.0)
@@ -333,12 +349,13 @@ async def main():
                         st.info(st.session_state.processing_status)
 
             # Show video preview and download button if video is ready
-            is_ready = check_video_status()
+            is_ready = check_video_status(st.session_state.temp_audio_file)
             print(is_ready)
             if is_ready or st.session_state.video_ready:
                 print("video preview ready")
                 output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
                 if os.path.exists(output_video_path):
+                    print("video file exists")
                     with preview_container:
                         st.empty()  # Clear previous content
                         st.subheader("Video Preview")

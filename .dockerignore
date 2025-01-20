@@ -1,0 +1,31 @@
+# flyctl launch added from .cache/uv/.gitignore
+.cache/uv/**/*
+
+# flyctl launch added from .cache/uv/built-wheels-v3/index/b2a7eb67d4c26b82/moviepy/1.0.3/hX0sj6CKpJlnjCaebeAC9/moviepy-1.0.3.tar.gz/docs/_themes/.gitignore
+.cache/uv/built-wheels-v3/index/b2a7eb67d4c26b82/moviepy/1.0.3/hX0sj6CKpJlnjCaebeAC9/moviepy-1.0.3.tar.gz/docs/_themes/**/*.pyc
+.cache/uv/built-wheels-v3/index/b2a7eb67d4c26b82/moviepy/1.0.3/hX0sj6CKpJlnjCaebeAC9/moviepy-1.0.3.tar.gz/docs/_themes/**/*.pyo
+.cache/uv/built-wheels-v3/index/b2a7eb67d4c26b82/moviepy/1.0.3/hX0sj6CKpJlnjCaebeAC9/moviepy-1.0.3.tar.gz/docs/_themes/**/.DS_Store
+
+# flyctl launch added from .cache/uv/built-wheels-v3/index/b2a7eb67d4c26b82/moviepy/2.0.0.dev2/i3HjuIeD36IXhHqOEZSHN/moviepy-2.0.0.dev2.tar.gz/docs/_themes/.gitignore
+.cache/uv/built-wheels-v3/index/b2a7eb67d4c26b82/moviepy/2.0.0.dev2/i3HjuIeD36IXhHqOEZSHN/moviepy-2.0.0.dev2.tar.gz/docs/_themes/**/*.pyc
+.cache/uv/built-wheels-v3/index/b2a7eb67d4c26b82/moviepy/2.0.0.dev2/i3HjuIeD36IXhHqOEZSHN/moviepy-2.0.0.dev2.tar.gz/docs/_themes/**/*.pyo
+.cache/uv/built-wheels-v3/index/b2a7eb67d4c26b82/moviepy/2.0.0.dev2/i3HjuIeD36IXhHqOEZSHN/moviepy-2.0.0.dev2.tar.gz/docs/_themes/**/.DS_Store
+
+# flyctl launch added from .cache/uv/built-wheels-v3/pypi/moviepy/1.0.3/6HK1d_AGHY28g2VkFHmRu/moviepy-1.0.3.tar.gz/docs/_themes/.gitignore
+.cache/uv/built-wheels-v3/pypi/moviepy/1.0.3/6HK1d_AGHY28g2VkFHmRu/moviepy-1.0.3.tar.gz/docs/_themes/**/*.pyc
+.cache/uv/built-wheels-v3/pypi/moviepy/1.0.3/6HK1d_AGHY28g2VkFHmRu/moviepy-1.0.3.tar.gz/docs/_themes/**/*.pyo
+.cache/uv/built-wheels-v3/pypi/moviepy/1.0.3/6HK1d_AGHY28g2VkFHmRu/moviepy-1.0.3.tar.gz/docs/_themes/**/.DS_Store
+
+# flyctl launch added from .cache/uv/built-wheels-v3/pypi/moviepy/2.0.0.dev2/STXunC8aeQxstl85kRvxc/moviepy-2.0.0.dev2.tar.gz/docs/_themes/.gitignore
+.cache/uv/built-wheels-v3/pypi/moviepy/2.0.0.dev2/STXunC8aeQxstl85kRvxc/moviepy-2.0.0.dev2.tar.gz/docs/_themes/**/*.pyc
+.cache/uv/built-wheels-v3/pypi/moviepy/2.0.0.dev2/STXunC8aeQxstl85kRvxc/moviepy-2.0.0.dev2.tar.gz/docs/_themes/**/*.pyo
+.cache/uv/built-wheels-v3/pypi/moviepy/2.0.0.dev2/STXunC8aeQxstl85kRvxc/moviepy-2.0.0.dev2.tar.gz/docs/_themes/**/.DS_Store
+
+# flyctl launch added from .cache/uv/sdists-v6/pypi/moviepy/2.0.0.dev2/Y6onW_CuqM6bMi1r2o8oe/src/docs/_themes/.gitignore
+.cache/uv/sdists-v6/pypi/moviepy/2.0.0.dev2/Y6onW_CuqM6bMi1r2o8oe/src/docs/_themes/**/*.pyc
+.cache/uv/sdists-v6/pypi/moviepy/2.0.0.dev2/Y6onW_CuqM6bMi1r2o8oe/src/docs/_themes/**/*.pyo
+.cache/uv/sdists-v6/pypi/moviepy/2.0.0.dev2/Y6onW_CuqM6bMi1r2o8oe/src/docs/_themes/**/.DS_Store
+
+# flyctl launch added from .pythonlibs/.gitignore
+.pythonlibs/**/*
+fly.toml

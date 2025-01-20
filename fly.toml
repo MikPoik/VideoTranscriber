@@ -1,0 +1,20 @@
+# fly.toml app configuration file generated for falling-sunset-3205 on 2025-01-20T14:07:54Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'falling-sunset-3205'
+primary_region = 'iad'
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ['app']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
