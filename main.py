@@ -236,16 +236,15 @@ async def main():
                 
                 if os.path.exists(output_video_path):
                     current_size = os.path.getsize(output_video_path)
+                    print(f"Current size: {current_size}")
+                    print(f"Last size: {st.session_state.last_file_size}")
 
-                    if st.session_state.last_file_size != current_size:
+                    # If size changed or processing just completed
+                    if st.session_state.last_file_size != current_size or st.session_state.processing_completed:
                         st.session_state.last_file_size = current_size
-                        return False
-                    print(current_size)
-                    print(st.session_state.last_file_size)
-
-                    if st.session_state.processing_completed:
                         st.session_state.processing_completed = False
                         st.rerun()
+                        return True
                     return True
                 return False
                 
