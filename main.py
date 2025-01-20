@@ -336,20 +336,22 @@ async def main():
             # Show video preview and download button if video is ready
             is_ready = check_video_status()
             print(is_ready)
-            if check_video_status() or ('video_ready' in st.session_state and st.session_state.video_ready):
+            if is_ready or st.session_state.video_ready:
                 print("video preview ready")
                 output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
-                with preview_container:
-                    st.subheader("Video Preview")
-                    st.video(output_video_path)
+                if os.path.exists(output_video_path):
+                    with preview_container:
+                        st.empty()  # Clear previous content
+                        st.subheader("Video Preview")
+                        st.video(output_video_path)
 
-                    with open(output_video_path, "rb") as file:
-                        st.download_button(
-                            label="Download Video with Subtitles",
-                            data=file,
-                            file_name="subtitled_video.mp4",
-                            mime="video/mp4"
-                        )
+                        with open(output_video_path, "rb") as file:
+                            st.download_button(
+                                label="Download Video with Subtitles",
+                                data=file,
+                                file_name="subtitled_video.mp4",
+                                mime="video/mp4"
+                            )
 
 if __name__ == "__main__":
     asyncio.run(main())
