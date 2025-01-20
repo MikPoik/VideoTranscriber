@@ -187,23 +187,33 @@ async def main():
 
             st.subheader('Adjust Subtitles')
             edited_subtitles = []
+            
+            # Create raw subtitle content for editing
+            current_content = ""
             for index, start, end, text in subtitles:
-
-                # Single slider for adjusting both start and end times
-                start_end_seconds = st.slider(
-                    f"Subtitle {index} timing:",
-                    0.0, st.session_state.video_duration,label_visibility="visible", 
-                    value=(time_to_seconds(start), time_to_seconds(end)), 
-                    step=0.01
-                )
-                # Update timecodes
-                start = format_time_str(start_end_seconds[0])
-                end = format_time_str(start_end_seconds[1])
-                # Subtitle text input
-                text = st.text_input(f"Subtitle {index} text:", text,label_visibility="visible")
-
-                # Collect edited subtitles
-                edited_subtitles.append((index, start, end, text))
+                current_content += f"{index}\n{start} --> {end}\n{text}\n\n"
+            
+            # Add expander for raw subtitle editing
+            with st.expander("Edit Subtitle Timings"):
+                edited_content = st.text_area("Edit subtitle timings directly", current_content, height=300)
+            
+            # Parse the edited content
+            try:
+                edited_blocks = edited_content.strip().split('\n\n')
+                for block in edited_blocks:
+                    lines = block.strip().split('\n')
+                    if len(lines) >= 3:
+                        index = int(lines[0].strip())
+                        timecode = lines[1].strip()
+                        text = '\n'.join(lines[2:])
+                        start, end = timecode.split(' --> ')
+                        
+                        # Add text input for each subtitle
+                        text = st.text_input(f"Subtitle {index} text:", text, label_visibility="visible")
+                        
+                        edited_subtitles.append((index, start, end, text))
+            except Exception as e:
+                st.error("Error parsing subtitle format. Please ensure correct format: index, timecode, text")
 
             # Button to save changes
             if st.button("Save Changes"):
