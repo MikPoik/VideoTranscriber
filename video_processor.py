@@ -33,12 +33,15 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
     txt_clip = txt_clip.with_position((5, 5))
     subtitle_clip = CompositeVideoClip([color_clip, txt_clip])
     
-    # Calculate center position
-    x_pos = (video_width - subtitle_clip.w) // 2
-    y_pos = video_height - subtitle_clip.h - 50
-    subtitle_clip = subtitle_clip.with_position((x_pos, y_pos))
-
-    return subtitle_clip.with_start(start).with_end(end)
+    # Create a function to calculate position
+    def get_position(t):
+        return ((video_width - subtitle_clip.w) // 2, video_height - subtitle_clip.h - 50)
+    
+    # Set position using the function instead of a tuple
+    subtitle_clip = subtitle_clip.with_position(get_position)
+    subtitle_clip = subtitle_clip.with_start(start).with_end(end)
+    
+    return subtitle_clip
 
 def create_subtitle_clip_wrapper(txt, start, end, video_dims, font_color, bg_color, font_size, transparency):
     return create_subtitle_clip(txt, start, end, video_dims, font_color, bg_color, font_size, transparency)
