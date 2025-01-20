@@ -57,11 +57,11 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
                 text = ' '.join(parts[2:])
                 subtitles.append(((start, end), text))
 
-    if subtitles:
-        from multiprocessing import Pool, cpu_count
+    from multiprocessing import Pool, cpu_count
+    # Get CPU count once at the beginning
+    processes = cpu_count()
 
-        # Get CPU count once
-        processes = cpu_count()
+    if subtitles:
         # Create clips in parallel using available CPU cores
         with Pool(processes=processes) as pool:
             subtitle_clips = pool.starmap(
@@ -71,6 +71,7 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
             
         final_video = CompositeVideoClip([video] + subtitle_clips, size=video.size)
     else:
+        subtitle_clips = []
         final_video = video
 
     print(f"Output video resolution: {final_video.w}x{final_video.h}")
