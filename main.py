@@ -35,8 +35,6 @@ if 'model' not in st.session_state:
     st.session_state.model = 'whisper-large'
 if 'video_duration' not in st.session_state:
     st.session_state.video_duration = 90
-if 'keep_alive' not in st.session_state:
-    st.session_state.keep_alive = 0
 if 'output_video_path' not in st.session_state:
     st.session_state.output_video_path = None
 if 'processing_completed' not in st.session_state:
@@ -233,13 +231,21 @@ async def main():
 
             @st.fragment(run_every=3)
             def check_video_status():
+                print("check video status")
                 output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
                 
                 if os.path.exists(output_video_path):
                     current_size = os.path.getsize(output_video_path)
+
                     if st.session_state.last_file_size != current_size:
                         st.session_state.last_file_size = current_size
                         return False
+                    print(current_size)
+                    print(st.session_state.last_file_size)
+
+                    if st.session_state.processing_completed:
+                        st.session_state.processing_completed = False
+                        st.rerun()
                     return True
                 return False
                 
@@ -263,25 +269,30 @@ async def main():
                 output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
                 output_temp_audiofile =  st.session_state.temp_dir.split("/")[2]
                 output_temp_audiofile += ".mp3"
-                
+                output_temp_audiofile_path = os.path.join(os.getcwd(), output_temp_audiofile)
+                print(output_temp_audiofile_path)
                 # Check if video needs to be generated
                 needs_processing = True
                 if os.path.exists(output_video_path):
                     current_size = os.path.getsize(output_video_path)
                     print(current_size)
                     print(st.session_state.last_file_size)
-                    if st.session_state.last_file_size == current_size :
+                    if os.path.exists(output_temp_audiofile_path):
+                        print("temp_file_exsits")
+                        needs_processing = False
+                    if st.session_state.last_file_size == current_size:
                         print("Video already generated")
                         needs_processing = False
                 
-                if needs_processing and not os.path.exists(output_temp_audiofile):
-                    print(os.path.exists(output_temp_audiofile))
+                if needs_processing:
+                    if os.path.exists(output_temp_audiofile_path):
+                        print(f"Using existing temp audio file: {output_temp_audiofile}")
                     st.session_state.processing_status = "Processing video..."
                     status_placeholder = st.empty()
                     status_placeholder.info("Processing video... This might take a while..")
                     progress_bar = st.progress(0)
                     progress_bar.progress(0.9)
-
+                    st.session_state.processing_completed = False
                     try:
                         await asyncio.wait_for(
                             asyncio.to_thread(add_subtitles_to_video, 
@@ -299,16 +310,17 @@ async def main():
                         st.session_state.processing_status = "Video processing complete!"
                         st.session_state.last_file_size = os.path.getsize(output_video_path)
                         st.session_state.video_ready = True
+                        st.session_state.processing_completed = True
                         logger.info("Video processing completed successfully")
                     except asyncio.TimeoutError:
                         st.session_state.processing_status = "Video processing timed out. Try with a smaller video."
                         logger.error("Video processing timed out")
                     except Exception as e:
                         st.session_state.processing_status = f"Error during video processing: {str(e)}"
-                        logger.error(f"Error during video processing: {str(e)}")
-                    
+                        logger.error(f"Error during video processing: {str(e)}")                    
                     st.session_state.generate_video = False
                     st.session_state.can_process = True
+                    st.session_state.video_ready = True
                     st.rerun()
 
             # Update status message
@@ -322,7 +334,10 @@ async def main():
                         st.info(st.session_state.processing_status)
 
             # Show video preview and download button if video is ready
+            is_ready = check_video_status()
+            print(is_ready)
             if check_video_status() or ('video_ready' in st.session_state and st.session_state.video_ready):
+                print("video preview ready")
                 output_video_path = os.path.join(st.session_state.temp_dir, "output_video.mp4")
                 with preview_container:
                     st.subheader("Video Preview")
