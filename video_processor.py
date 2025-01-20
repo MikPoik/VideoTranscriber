@@ -37,13 +37,13 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
 
     return subtitle_clip.with_start(start).with_end(end)
 
+def create_subtitle_clip_wrapper(txt, start, end, video_dims, font_color, bg_color, font_size, transparency):
+    return create_subtitle_clip(txt, start, end, video_dims, font_color, bg_color, font_size, transparency)
+
 def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, bg_color, font_size, transparency,temp_file_name):
     video = VideoFileClip(video_path)
     print(f"Original video resolution: {video.w}x{video.h}")
     print(temp_file_name)
-    
-    def create_subtitle_clip_wrapper(txt, start, end):
-        return create_subtitle_clip(txt, start, end, (video.w, video.h), font_color, bg_color, font_size, transparency)
 
     subtitles = []
     with open(subtitle_file, 'r') as f:
@@ -66,7 +66,7 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
         with Pool(processes=processes) as pool:
             subtitle_clips = pool.starmap(
                 create_subtitle_clip_wrapper,
-                [(sub[1], sub[0][0], sub[0][1]) for sub in subtitles]
+                [(sub[1], sub[0][0], sub[0][1], (video.w, video.h), font_color, bg_color, font_size, transparency) for sub in subtitles]
             )
             
         final_video = CompositeVideoClip([video] + subtitle_clips, size=video.size)
