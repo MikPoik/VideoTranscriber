@@ -58,18 +58,38 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
                 subtitles.append(((start, end), text))
 
     if subtitles:
-        subtitle_clips = [create_subtitle_clip_wrapper(sub[1], sub[0][0], sub[0][1]) for sub in subtitles]
+        from multiprocessing import Pool, cpu_count
+        
+        # Create clips in parallel using available CPU cores
+        with Pool(processes=cpu_count()) as pool:
+            subtitle_clips = pool.starmap(
+                create_subtitle_clip_wrapper,
+                [(sub[1], sub[0][0], sub[0][1]) for sub in subtitles]
+            )
+            
         final_video = CompositeVideoClip([video] + subtitle_clips, size=video.size)
     else:
         final_video = video
-
 
     print(f"Output video resolution: {final_video.w}x{final_video.h}")
     
     # Start timing
     start_time = time.time()
     
-    final_video.write_videofile(output_path, preset='ultrafast',temp_audiofile=temp_file_name)
+    # Optimized write configuration
+    final_video.write_videofile(
+        output_path,
+        preset='ultrafast',
+        temp_audiofile=temp_file_name,
+        codec='libx264',
+        audio_codec='aac',
+        threads=cpu_count(),
+        ffmpeg_params=['-crf', '28']  # Balanced quality/compression
+    )
+    
+    # Clean up clips to free memory
+    for clip in subtitle_clips:
+        clip.close()
     
     # Calculate duration
     duration = time.time() - start_time
