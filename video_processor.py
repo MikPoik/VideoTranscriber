@@ -60,7 +60,8 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
     if subtitles:
         from multiprocessing import Pool, cpu_count
 
-        # Get CPU count once
+        # Get CPU count once and store it at function scope
+        global num_cores
         num_cores = cpu_count()
         # Create clips in parallel using available CPU cores
         with Pool(processes=num_cores) as pool:
