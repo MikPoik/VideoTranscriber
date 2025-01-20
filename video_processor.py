@@ -33,7 +33,10 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
     txt_clip = txt_clip.with_position((5, 5))
     subtitle_clip = CompositeVideoClip([color_clip, txt_clip])
     
-    subtitle_clip = subtitle_clip. with_position(('center', video_height - subtitle_clip.h - 50))
+    # Calculate center position
+    x_pos = (video_width - subtitle_clip.w) // 2
+    y_pos = video_height - subtitle_clip.h - 50
+    subtitle_clip = subtitle_clip.with_position((x_pos, y_pos))
 
     return subtitle_clip.with_start(start).with_end(end)
 
