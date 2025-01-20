@@ -213,7 +213,10 @@ async def main():
                     with col1:
                         if st.button("Save Changes"):
                             save_subtitles(st.session_state.subtitle_file, edited_subtitles)
+                            st.session_state.last_file_size = None  # Force video regeneration
+                            st.session_state.video_ready = False
                             st.success("Subtitles saved successfully.")
+                            st.rerun()  # Reload the page to reflect changes
                     
                     with col2:
                         with open(st.session_state.subtitle_file, "rb") as file:
