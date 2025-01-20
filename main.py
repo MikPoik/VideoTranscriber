@@ -194,39 +194,37 @@ async def main():
                 current_content += f"{index}\n{start} --> {end}\n{text}\n\n"
             
             # Add expander for raw subtitle editing
-            with st.expander("Edit Subtitle Timings"):
-                edited_content = st.text_area("Edit subtitle timings directly", current_content, height=300)
-                # Button to save changes
-                if st.button("Save Changes"):
-                    save_subtitles(st.session_state.subtitle_file, edited_subtitles)
-                    st.success("Subtitles saved successfully.")
-
-                # Download button for subtitles
-                with open(st.session_state.subtitle_file, "rb") as file:
-                    st.download_button(
-                        label="Download Subtitles (.srt)",
-                        data=file,
-                        file_name="subtitles.srt",
-                        mime="text/plain"
-                    )
-            
-            # Parse the edited content
-            try:
-                edited_blocks = edited_content.strip().split('\n\n')
-                for block in edited_blocks:
-                    lines = block.strip().split('\n')
-                    if len(lines) >= 3:
-                        index = int(lines[0].strip())
-                        timecode = lines[1].strip()
-                        text = '\n'.join(lines[2:])
-                        start, end = timecode.split(' --> ')
-                        
-                        # Add text input for each subtitle
-                        #text = st.text_input(f"Subtitle {index} text:", text, label_visibility="visible")
-                        
-                        edited_subtitles.append((index, start, end, text))
-            except Exception as e:
-                st.error("Error parsing subtitle format. Please ensure correct format: index, timecode, text")
+            with st.expander("Edit Subtitles"):
+                edited_content = st.text_area("Edit subtitles directly", current_content, height=300)
+                
+                # Parse the edited content
+                try:
+                    edited_blocks = edited_content.strip().split('\n\n')
+                    for block in edited_blocks:
+                        lines = block.strip().split('\n')
+                        if len(lines) >= 3:
+                            index = int(lines[0].strip())
+                            timecode = lines[1].strip()
+                            text = '\n'.join(lines[2:])
+                            start, end = timecode.split(' --> ')
+                            edited_subtitles.append((index, start, end, text))
+                            
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if st.button("Save Changes"):
+                            save_subtitles(st.session_state.subtitle_file, edited_subtitles)
+                            st.success("Subtitles saved successfully.")
+                    
+                    with col2:
+                        with open(st.session_state.subtitle_file, "rb") as file:
+                            st.download_button(
+                                label="Download Subtitles (.srt)",
+                                data=file,
+                                file_name="subtitles.srt",
+                                mime="text/plain"
+                            )
+                except Exception as e:
+                    st.error("Error parsing subtitle format. Please ensure correct format: index, timecode, text")
 
 
 
