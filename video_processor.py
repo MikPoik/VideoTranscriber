@@ -85,7 +85,7 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
         preset='ultrafast',
         temp_audiofile=temp_file_name,
         codec='libx264',
-        audio_codec='aac',
+        audio_codec='libmp3lame',
         threads=processes,
         ffmpeg_params=['-crf', '28']  # Balanced quality/compression
     )
