@@ -63,7 +63,7 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
 
 
     print(f"Output video resolution: {final_video.w}x{final_video.h}")
-    final_video.write_videofile(output_path, preset='ultrafast',threads=4,temp_audiofile=temp_file_name)
+    final_video.write_videofile(output_path, preset='veryfast',threads=4,temp_audiofile=temp_file_name)
     video.close()
     final_video.close()
 
