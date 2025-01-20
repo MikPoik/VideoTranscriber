@@ -196,6 +196,19 @@ async def main():
             # Add expander for raw subtitle editing
             with st.expander("Edit Subtitle Timings"):
                 edited_content = st.text_area("Edit subtitle timings directly", current_content, height=300)
+                # Button to save changes
+                if st.button("Save Changes"):
+                    save_subtitles(st.session_state.subtitle_file, edited_subtitles)
+                    st.success("Subtitles saved successfully.")
+
+                # Download button for subtitles
+                with open(st.session_state.subtitle_file, "rb") as file:
+                    st.download_button(
+                        label="Download Subtitles (.srt)",
+                        data=file,
+                        file_name="subtitles.srt",
+                        mime="text/plain"
+                    )
             
             # Parse the edited content
             try:
@@ -209,25 +222,15 @@ async def main():
                         start, end = timecode.split(' --> ')
                         
                         # Add text input for each subtitle
-                        text = st.text_input(f"Subtitle {index} text:", text, label_visibility="visible")
+                        #text = st.text_input(f"Subtitle {index} text:", text, label_visibility="visible")
                         
                         edited_subtitles.append((index, start, end, text))
             except Exception as e:
                 st.error("Error parsing subtitle format. Please ensure correct format: index, timecode, text")
 
-            # Button to save changes
-            if st.button("Save Changes"):
-                save_subtitles(st.session_state.subtitle_file, edited_subtitles)
-                st.success("Subtitles saved successfully.")
 
-            # Download button for subtitles
-            with open(st.session_state.subtitle_file, "rb") as file:
-                st.download_button(
-                    label="Download Subtitles (.srt)",
-                    data=file,
-                    file_name="subtitles.srt",
-                    mime="text/plain"
-                )
+
+
 
             # Subtitle customization
             st.subheader("Customize Subtitles")
