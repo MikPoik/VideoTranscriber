@@ -37,11 +37,22 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
 
     return subtitle_clip.with_start(start).with_end(end)
 
+import sys
+import uuid
+
+def globalize(func):
+    def result(*args, **kwargs):
+        return func(*args, **kwargs)
+    result.__name__ = result.__qualname__ = uuid.uuid4().hex
+    setattr(sys.modules[result.__module__], result.__name__, result)
+    return result
+
 def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, bg_color, font_size, transparency,temp_file_name):
     video = VideoFileClip(video_path)
     print(f"Original video resolution: {video.w}x{video.h}")
     print(temp_file_name)
     
+    @globalize
     def create_subtitle_clip_wrapper(txt, start, end):
         return create_subtitle_clip(txt, start, end, (video.w, video.h), font_color, bg_color, font_size, transparency)
 
