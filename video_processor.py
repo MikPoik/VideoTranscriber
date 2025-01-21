@@ -31,24 +31,27 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
     max_chars_per_line = int(video_width / (fontsize * 0.6))
     wrapped_text = '\n'.join(wrap(txt, max_chars_per_line))
     font_path = os.path.join('fonts', 'LiberationSans-Regular.ttf')
-    txt_clip = TextClip(font_path,text=wrapped_text, font_size=fontsize, color=font_color, method='label')
+    txt_clip = TextClip(font_path, text=wrapped_text, font_size=fontsize, color=font_color, method='label')
     
     # Create a background with alpha
     bg_color_rgb = tuple(int(bg_color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
-    alpha = int(255 * (1 - transparency/100))  # Convert transparency percentage to alpha value
+    alpha = int(255 * (1 - transparency/100))
     color_array = np.full((txt_clip.h + 10, txt_clip.w + 10, 4), (*bg_color_rgb, alpha), dtype=np.uint8)
-    color_clip = ImageClip(color_array, transparent=True)
+    color_clip = ImageClip(color_array, transparent=True, duration=end-start)
     
-    # Overlay the text clip on the color clip
-    txt_clip = txt_clip.with_position((5, 5))
+    # Position text clip
+    txt_clip = txt_clip.set_position((5, 5)).set_duration(end-start)
+    color_clip = color_clip.set_duration(end-start)
+    
+    # Create composite clip
     subtitle_clip = CompositeVideoClip([color_clip, txt_clip])
     
-    # Create a picklable position handler
-    position_handler = SubtitlePosition(video_width, video_height, subtitle_clip.w, subtitle_clip.h)
+    # Calculate fixed position
+    x_pos = (video_width - subtitle_clip.w) // 2
+    y_pos = video_height - subtitle_clip.h - 50
     
-    # Set position using the handler
-    subtitle_clip = subtitle_clip.with_position(position_handler)
-    subtitle_clip = subtitle_clip.with_start(start).with_end(end)
+    # Set position and timing without lambda functions
+    subtitle_clip = subtitle_clip.set_position((x_pos, y_pos)).set_start(start).set_duration(end-start)
     
     return subtitle_clip
 
