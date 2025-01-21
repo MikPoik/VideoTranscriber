@@ -1,11 +1,13 @@
+
 import os
 import time
 import logging
+import uuid
+from concurrent.futures import ThreadPoolExecutor
 from moviepy import VideoFileClip, TextClip, CompositeVideoClip, ImageClip
 from moviepy.video.tools.subtitles import SubtitlesClip
 from textwrap import wrap
 import numpy as np
-import random
 
 def extract_audio(video_path, audio_path):
     video = VideoFileClip(video_path)
@@ -14,6 +16,13 @@ def extract_audio(video_path, audio_path):
     video.close()
     audio.close()
 
+def globalize(func):
+    # Make the function name globally unique to avoid pickling issues
+    result = func
+    result.__name__ = result.__qualname__ = uuid.uuid4().hex
+    return result
+
+@globalize
 def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font_size, transparency):
     video_width, video_height = video_size
 
@@ -33,16 +42,17 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
     txt_clip = txt_clip.with_position((5, 5))
     subtitle_clip = CompositeVideoClip([color_clip, txt_clip])
     
-    subtitle_clip = subtitle_clip. with_position(('center', video_height - subtitle_clip.h - 50))
+    subtitle_clip = subtitle_clip.with_position(('center', video_height - subtitle_clip.h - 50))
 
-    return subtitle_clip.with_start(start).with_end(end)
+    return subtitle_clip.with_start(start).with_duration(end - start)
 
-def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, bg_color, font_size, transparency,temp_file_name):
+def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, bg_color, font_size, transparency, temp_file_name):
     video = VideoFileClip(video_path)
     print(f"Original video resolution: {video.w}x{video.h}")
     print(temp_file_name)
     
-    def create_subtitle_clip_wrapper(txt, start, end):
+    def create_subtitle_clip_wrapper(subtitle_data):
+        txt, start, end = subtitle_data
         return create_subtitle_clip(txt, start, end, (video.w, video.h), font_color, bg_color, font_size, transparency)
 
     subtitles = []
@@ -50,28 +60,26 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
         content = f.read().strip().split('\n\n')
         for subtitle in content:
             parts = subtitle.split('\n')
-            if len(parts) >= 3:  # Ensure we have at least 3 parts (index, timecode, and text)
+            if len(parts) >= 3:
                 timecode = parts[1].split(' --> ')
                 start = time_to_seconds(timecode[0])
                 end = time_to_seconds(timecode[1])
                 text = ' '.join(parts[2:])
-                subtitles.append(((start, end), text))
+                subtitles.append((text, start, end))
 
     if subtitles:
-        subtitle_clips = [create_subtitle_clip_wrapper(sub[1], sub[0][0], sub[0][1]) for sub in subtitles]
+        # Use ThreadPoolExecutor for parallel processing
+        with ThreadPoolExecutor(max_workers=min(os.cpu_count(), len(subtitles))) as executor:
+            subtitle_clips = list(executor.map(create_subtitle_clip_wrapper, subtitles))
+            
         final_video = CompositeVideoClip([video] + subtitle_clips, size=video.size)
     else:
         final_video = video
 
-
     print(f"Output video resolution: {final_video.w}x{final_video.h}")
     
-    # Start timing
     start_time = time.time()
-    
-    final_video.write_videofile(output_path, preset='ultrafast',temp_audiofile=temp_file_name)
-    
-    # Calculate duration
+    final_video.write_videofile(output_path, preset='ultrafast', temp_audiofile=temp_file_name)
     duration = time.time() - start_time
     logging.info(f"Video write completed in {duration:.2f} seconds")
     
