@@ -76,8 +76,8 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
             
         # Preserve original video properties
         final_video = CompositeVideoClip([video] + subtitle_clips, size=(video.w, video.h))
-        final_video = final_video.set_duration(video.duration)
-        final_video = final_video.set_fps(video.fps)
+        final_video = final_video.with_duration(video.duration)
+        final_video = final_video.with_fps(video.fps)
     else:
         final_video = video.copy()
 
