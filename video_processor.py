@@ -37,22 +37,11 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
 
     return subtitle_clip.with_start(start).with_end(end)
 
-import sys
-import uuid
-
-def globalize(func):
-    def result(*args, **kwargs):
-        return func(*args, **kwargs)
-    result.__name__ = result.__qualname__ = uuid.uuid4().hex
-    setattr(sys.modules[result.__module__], result.__name__, result)
-    return result
-
 def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, bg_color, font_size, transparency,temp_file_name):
     video = VideoFileClip(video_path)
     print(f"Original video resolution: {video.w}x{video.h}")
     print(temp_file_name)
     
-    @globalize
     def create_subtitle_clip_wrapper(txt, start, end):
         return create_subtitle_clip(txt, start, end, (video.w, video.h), font_color, bg_color, font_size, transparency)
 
@@ -68,42 +57,19 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
                 text = ' '.join(parts[2:])
                 subtitles.append(((start, end), text))
 
-    from multiprocessing import Pool, cpu_count
-    # Get CPU count once at the beginning
-    processes = cpu_count()
-
     if subtitles:
-        # Create clips in parallel using available CPU cores
-        with Pool(processes=processes) as pool:
-            subtitle_clips = pool.starmap(
-                create_subtitle_clip_wrapper,
-                [(sub[1], sub[0][0], sub[0][1]) for sub in subtitles]
-            )
-            
+        subtitle_clips = [create_subtitle_clip_wrapper(sub[1], sub[0][0], sub[0][1]) for sub in subtitles]
         final_video = CompositeVideoClip([video] + subtitle_clips, size=video.size)
     else:
-        subtitle_clips = []
         final_video = video
+
 
     print(f"Output video resolution: {final_video.w}x{final_video.h}")
     
     # Start timing
     start_time = time.time()
     
-    # Optimized write configuration
-    final_video.write_videofile(
-        output_path,
-        preset='ultrafast',
-        temp_audiofile=temp_file_name,
-        codec='libx264',
-        audio_codec='libmp3lame',
-        threads=processes,
-        ffmpeg_params=['-crf', '28']  # Balanced quality/compression
-    )
-    
-    # Clean up clips to free memory
-    for clip in subtitle_clips:
-        clip.close()
+    final_video.write_videofile(output_path, preset='ultrafast',temp_audiofile=temp_file_name)
     
     # Calculate duration
     duration = time.time() - start_time
