@@ -40,8 +40,8 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
     color_clip = ImageClip(color_array, transparent=True, duration=end-start)
     
     # Position text clip
-    txt_clip = txt_clip.set_position((5, 5)).set_duration(end-start)
-    color_clip = color_clip.set_duration(end-start)
+    txt_clip = txt_clip.with_position((5, 5)).with_duration(end-start)
+    color_clip = color_clip.with_duration(end-start)
     
     # Create composite clip
     subtitle_clip = CompositeVideoClip([color_clip, txt_clip])
@@ -51,7 +51,7 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
     y_pos = video_height - subtitle_clip.h - 50
     
     # Set position and timing without lambda functions
-    subtitle_clip = subtitle_clip.set_position((x_pos, y_pos)).set_start(start).set_duration(end-start)
+    subtitle_clip = subtitle_clip.with_position((x_pos, y_pos)).with_start(start).with_duration(end-start)
     
     return subtitle_clip
 
