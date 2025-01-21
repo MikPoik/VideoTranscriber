@@ -14,6 +14,16 @@ def extract_audio(video_path, audio_path):
     video.close()
     audio.close()
 
+class SubtitlePosition:
+    def __init__(self, width, height, clip_width, clip_height):
+        self.width = width
+        self.height = height
+        self.clip_width = clip_width
+        self.clip_height = clip_height
+    
+    def __call__(self, t):
+        return ((self.width - self.clip_width) // 2, self.height - self.clip_height - 50)
+
 def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font_size, transparency):
     video_width, video_height = video_size
 
@@ -33,12 +43,11 @@ def create_subtitle_clip(txt, start, end, video_size, font_color, bg_color, font
     txt_clip = txt_clip.with_position((5, 5))
     subtitle_clip = CompositeVideoClip([color_clip, txt_clip])
     
-    # Create a function to calculate position
-    def get_position(t):
-        return ((video_width - subtitle_clip.w) // 2, video_height - subtitle_clip.h - 50)
+    # Create a picklable position handler
+    position_handler = SubtitlePosition(video_width, video_height, subtitle_clip.w, subtitle_clip.h)
     
-    # Set position using the function instead of a tuple
-    subtitle_clip = subtitle_clip.with_position(get_position)
+    # Set position using the handler
+    subtitle_clip = subtitle_clip.with_position(position_handler)
     subtitle_clip = subtitle_clip.with_start(start).with_end(end)
     
     return subtitle_clip
