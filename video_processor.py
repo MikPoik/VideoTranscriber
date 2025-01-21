@@ -9,7 +9,7 @@ processes = cpu_count()
 
 def extract_audio(video_path, audio_path):
     cmd = [
-        'ffmpeg', '-i', video_path,
+        'ffmpeg', '-y','-i', video_path,
         '-vn', '-acodec', 'pcm_s16le',
         '-ar', '44100', '-ac', '2',
         audio_path
@@ -28,7 +28,7 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
     style = f"FontSize={font_size},PrimaryColour=&H{font_color},BackColour=&H{alpha}{bg_color}"
 
     cmd = [
-        'ffmpeg', '-i', video_path,
+        'ffmpeg', '-y','-i', video_path,
         '-vf', f"subtitles={subtitle_file}:force_style='{style}'",
         '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
         '-c:a', 'copy',
