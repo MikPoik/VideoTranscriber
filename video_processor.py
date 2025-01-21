@@ -74,9 +74,12 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
         with ThreadPoolExecutor(max_workers=min(os.cpu_count(), len(subtitles))) as executor:
             subtitle_clips = list(executor.map(create_subtitle_clip_wrapper, subtitles))
             
-        final_video = CompositeVideoClip([video] + subtitle_clips, size=video.size)
+        # Preserve original video properties
+        final_video = CompositeVideoClip([video] + subtitle_clips, size=(video.w, video.h))
+        final_video = final_video.set_duration(video.duration)
+        final_video = final_video.set_fps(video.fps)
     else:
-        final_video = video
+        final_video = video.copy()
 
     print(f"Output video resolution: {final_video.w}x{final_video.h}")
     
