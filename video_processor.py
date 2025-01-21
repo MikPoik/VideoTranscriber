@@ -93,23 +93,29 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
     processes = cpu_count()
 
     if subtitles:
-        subtitle_clips = []
-        # Process subtitles sequentially to avoid pickling issues
-        for sub in subtitles:
-            clip = create_subtitle_clip_wrapper(
-                sub[1], sub[0][0], sub[0][1], 
-                (video.w, video.h), 
-                font_color, bg_color, 
-                font_size, transparency
+        # Create clips in parallel using available CPU cores
+        with Pool(processes=processes) as pool:
+            subtitle_clips = pool.starmap(
+                create_subtitle_clip_wrapper,
+                [(sub[1], sub[0][0], sub[0][1], (video.w, video.h), font_color, bg_color, font_size, transparency) for sub in subtitles]
             )
-            subtitle_clips.append(clip)
             
         @globalize
         def make_frame(t):
             return video.get_frame(t)
-            
+
         video.make_frame = make_frame
-        final_video = CompositeVideoClip([video] + subtitle_clips, size=video.size)
+        
+        @globalize
+        def make_composite_frame(t):
+            return CompositeVideoClip([video] + subtitle_clips, size=video.size).get_frame(t)
+            
+        final_video = VideoFileClip.__new__(VideoFileClip)
+        final_video.make_frame = make_composite_frame
+        final_video.size = video.size
+        final_video.duration = video.duration
+        final_video.fps = video.fps
+        final_video.audio = video.audio
     else:
         subtitle_clips = []
         final_video = video
