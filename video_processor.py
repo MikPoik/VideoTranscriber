@@ -1,13 +1,15 @@
-
 import os
 import time
 import logging
 import uuid
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, process
 from moviepy import VideoFileClip, TextClip, CompositeVideoClip, ImageClip
 from moviepy.video.tools.subtitles import SubtitlesClip
 from textwrap import wrap
 import numpy as np
+from multiprocessing import cpu_count
+# Get CPU count once at the beginning
+processes = cpu_count()
 
 def extract_audio(video_path, audio_path):
     video = VideoFileClip(video_path)
@@ -79,7 +81,17 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
     print(f"Output video resolution: {final_video.w}x{final_video.h}")
     
     start_time = time.time()
-    final_video.write_videofile(output_path, preset='ultrafast', temp_audiofile=temp_file_name)
+    # Optimized write configuration
+    final_video.write_videofile(
+        output_path,
+        preset='ultrafast',
+        temp_audiofile=temp_file_name,
+        codec='libx264',
+        audio_codec='libmp3lame',
+        threads=processes,
+        ffmpeg_params=['-crf', '28']  # Balanced quality/compression
+    )
+
     duration = time.time() - start_time
     logging.info(f"Video write completed in {duration:.2f} seconds")
     
