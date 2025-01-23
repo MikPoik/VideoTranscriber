@@ -22,11 +22,12 @@ def add_subtitles_to_video(video_path, subtitle_file, output_path, font_color, b
     bg_color = bg_color.lstrip('#')
 
     # Calculate background alpha (transparency)
-    alpha = hex(int(255 * (1 - transparency/100)))[2:].zfill(2)
+    bg_alpha = hex(int(255 * (1 - transparency/100)))[2:].zfill(2)
+    font_alpha = bg_alpha  # Using same transparency for font
 
     # FFmpeg subtitle style
     font_path = os.path.join(os.getcwd(), 'fonts', 'LiberationSans-Regular.ttf')
-    style = f"FontName=LiberationSans-Regular,FontFile={font_path},FontSize={font_size},PrimaryColour=&H{font_color},BackColour=&H{alpha}{bg_color}"
+    style = f"FontName=LiberationSans-Regular,FontFile={font_path},FontSize={font_size},PrimaryColour=&H{font_alpha}{font_color},BackColour=&H{bg_alpha}{bg_color}"
 
     cmd = [
         'ffmpeg', '-y','-i', video_path,
