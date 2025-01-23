@@ -237,7 +237,7 @@ async def main():
             st.subheader("Customize Subtitles")
             font_color = st.color_picker("Font Color", "#FFFFFF")
             bg_color = st.color_picker("Background Color", "#000000")
-            font_size = st.slider("Font Size", 5, 50, 18)
+            font_size = st.slider("Font Size", 5, 50, 10)
             transparency = st.slider("Background Transparency", 0, 100, 80)
 
             # Initialize states
