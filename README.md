@@ -21,9 +21,8 @@ A Streamlit web application that transcribes videos and generates editable subti
 ## Dependencies
 
 - deepgram-sdk
-- moviepy
+- ffmpeg (nix: pkgs.ffmpeg-full)
 - streamlit
-- numpy
 
 ## Usage
 
